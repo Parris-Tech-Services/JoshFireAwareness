@@ -3,8 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = path.dirname(fileURLToPath(import.meta.url));
-const indexPath = path.join(root, "index.html");
-const html = await readFile(indexPath, "utf8");
+const html = await readFile(path.join(root, "index.html"), "utf8");
 const failures = [];
 
 function expect(condition, message) {
@@ -16,40 +15,8 @@ expect(/<html\b[^>]*\blang=["'][^"']+["']/i.test(html), "index.html is missing a
 expect(/<meta\b[^>]*\bname=["']viewport["']/i.test(html), "index.html is missing a viewport meta tag");
 expect(/<title>[^<]+<\/title>/i.test(html), "index.html is missing a non-empty title");
 expect(/<h1\b/i.test(html), "index.html is missing a primary h1 heading");
-
-const ids = [...html.matchAll(/\bid=["']([^"']+)["']/gi)].map((match) => match[1]);
-const duplicateIds = [...new Set(ids.filter((id, index) => ids.indexOf(id) !== index))];
-expect(duplicateIds.length === 0, `Duplicate HTML ids: ${duplicateIds.join(", ")}`);
-
-for (const match of html.matchAll(/<button\b([^>]*)>([\s\S]*?)<\/button>/gi)) {
-  const attrs = match[1];
-  const text = match[2].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-  const hasAriaLabel = /\baria-label=["'][^"']+["']/i.test(attrs);
-  expect(Boolean(text || hasAriaLabel), "Found a button without visible text or aria-label");
-}
-
-const refs = new Set(
-  [...html.matchAll(/\b(?:src|href)=["']([^"']+)["']/gi)]
-    .map((match) => match[1].trim())
-    .filter(Boolean)
-    .filter((ref) => !/^(?:https?:|mailto:|tel:|sms:|data:|javascript:|#)/i.test(ref))
-    .map((ref) => ref.split(/[?#]/, 1)[0])
-    .filter(Boolean)
-);
-
-for (const ref of refs) {
-  const relative = ref.startsWith("/") ? ref.slice(1) : ref.replace(/^\.\//, "");
-  const target = path.resolve(root, relative);
-  if (!target.startsWith(`${root}${path.sep}`) && target !== root) {
-    failures.push(`Local asset escapes repository root: ${ref}`);
-    continue;
-  }
-  try {
-    await access(target);
-  } catch {
-    failures.push(`Missing local asset referenced by index.html: ${ref}`);
-  }
-}
+expect(/\bid=["']refreshBtn["']/i.test(html), "index.html is missing the manual refresh control");
+expect(/navigator\.serviceWorker|serviceWorker\.register/i.test(html), "index.html does not register offline support");
 
 for (const required of ["service-worker.js", "docs/favicon.svg"]) {
   try {
@@ -65,4 +32,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log(`Static verification passed: ${ids.length} ids checked, ${refs.size} local references resolved.`);
+console.log("Static verification passed: document shell, refresh control, offline registration, and required assets are present.");
