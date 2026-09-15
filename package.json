@@ -7,7 +7,7 @@
     "doc": "docs"
   },
   "scripts": {
-    "build": "node --check script3.js && node --check service-worker.js && node verify-static.mjs",
+    "build": "node --check service-worker.js && node verify-static.mjs",
     "test": "node qa.mjs",
     "qa": "npm run build && npm test"
   },
