@@ -1,0 +1,11 @@
+[build]
+  publish = "."
+  functions = "netlify/functions"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+  force = true
+
+# Notes: Deploy this repo to Netlify; the included function `netlify/functions/emv.js` will be available at `/.netlify/functions/emv`.
