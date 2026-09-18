@@ -1,0 +1,55 @@
+name: CRAP4All quality gate
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**/*.js'
+      - '.github/workflows/crap4all.yml'
+  pull_request:
+    paths:
+      - '**/*.js'
+
+jobs:
+  crap4all:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install complexity analyzer
+        run: python -m pip install 'lizard>=1.24.0,<2'
+      - name: Enforce CRAP below 30
+        run: |
+          python <<'PY'
+          from pathlib import Path
+          import lizard
+
+          excluded = {'.git', 'node_modules', 'vendor', 'dist', 'build', 'target', 'coverage', '.next', '.cache'}
+          scores = []
+
+          for path in Path('.').rglob('*.js'):
+              if any(part in excluded for part in path.parts[:-1]):
+                  continue
+              info = lizard.analyze_file(str(path))
+              for fn in info.function_list:
+                  cc = max(1, int(fn.cyclomatic_complexity or 1))
+                  # No coverage report is currently present, matching the portfolio audit's conservative 0% coverage rule.
+                  crap = cc * cc + cc
+                  scores.append((crap, cc, path.as_posix(), fn.long_name or fn.name, fn.start_line))
+
+          if not scores:
+              raise SystemExit('No JavaScript functions found to score.')
+
+          scores.sort(reverse=True)
+          crap, cc, path, name, line = scores[0]
+          print(f'Headline CRAP: {crap:.2f}')
+          print(f'Worst CC: {cc}')
+          print(f'Worst function: {path}:{line} {name}')
+          print(f'Functions scored: {len(scores)}')
+
+          if crap >= 30:
+              raise SystemExit(f'CRAP threshold failed: {crap:.2f} >= 30')
+          print('CRAP threshold passed: headline score is below 30.')
+          PY

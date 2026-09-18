@@ -1,0 +1,29 @@
+{
+  "name": "joshfireawareness",
+  "version": "1.0.0",
+  "description": "A personal **fire-awareness dashboard** prototype for the **Bendigo–Ballarat region of Victoria, Australia**. It surfaces fire/incident information and handy links to help with situational awareness during fire season.",
+  "main": "service-worker.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "build": "node --check service-worker.js && node verify-static.mjs",
+    "test": "node qa.mjs",
+    "qa": "npm run build && npm test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/joshuaparris-max/JoshFireAwareness.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/joshuaparris-max/JoshFireAwareness/issues"
+  },
+  "homepage": "https://github.com/joshuaparris-max/JoshFireAwareness#readme",
+  "devDependencies": {
+    "playwright": "^1.62.1"
+  }
+}
