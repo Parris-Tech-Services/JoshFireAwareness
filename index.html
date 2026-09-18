@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FireReady — Household Fire Readiness Practice</title>
+<style>
+  :root { --bg:#1a120c; --card:#241a12; --line:#3c2c1d; --text:#f5ece0; --muted:#c2a98f; --accent:#ff8c42; --warn:#ffd166; --good:#7bd88f; --danger:#ff6b5e; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; background:var(--bg); color:var(--text); line-height:1.6; padding:0 16px 40px; }
+  .wrap { max-width:760px; margin:0 auto; }
+  .disclaimer { background:#5a1d12; border:1px solid #7a2a1a; color:#ffe3d6; border-radius:0 0 12px 12px; padding:14px 18px; font-size:.9rem; text-align:center; }
+  .disclaimer strong { color:#fff; }
+  header { text-align:center; margin:22px 0 10px; }
+  header h1 { font-size:2rem; }
+  header p { color:var(--muted); }
+  .tabs { display:flex; gap:6px; justify-content:center; margin:16px 0; flex-wrap:wrap; }
+  .tab { background:var(--card); border:1px solid var(--line); color:var(--text); border-radius:999px; padding:9px 18px; cursor:pointer; font-size:.9rem; }
+  .tab.active { background:var(--accent); border-color:var(--accent); color:#2a1408; font-weight:700; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px 20px; margin-bottom:14px; }
+  h2 { font-size:1.2rem; margin-bottom:6px; }
+  .muted { color:var(--muted); font-size:.9rem; }
+  .checkitem { display:flex; align-items:flex-start; gap:12px; padding:11px 0; border-top:1px solid var(--line); cursor:pointer; }
+  .checkitem:first-of-type { border-top:none; }
+  .box { width:24px; height:24px; border:2px solid var(--accent); border-radius:6px; flex:none; display:flex; align-items:center; justify-content:center; font-size:.9rem; margin-top:2px; }
+  .checkitem.done .box { background:var(--good); border-color:var(--good); color:#0c2010; }
+  .checkitem.done .label { color:var(--muted); text-decoration:line-through; }
+  .label .t { font-weight:600; }
+  .label .h { color:var(--muted); font-size:.84rem; }
+  .progress { height:10px; background:#140d08; border-radius:999px; overflow:hidden; margin:6px 0 4px; }
+  .progress > div { height:100%; background:linear-gradient(90deg,var(--accent),var(--good)); transition:width .3s; }
+  .links a { display:block; background:#140d08; border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin-bottom:8px; color:var(--text); text-decoration:none; }
+  .links a:hover { border-color:var(--accent); }
+  .links .emergency { background:#5a1d12; border-color:#7a2a1a; font-weight:700; }
+  .links small { color:var(--muted); display:block; }
+  .sbtns { display:flex; flex-direction:column; gap:8px; margin-top:10px; }
+  .sbtn { background:#140d08; border:1px solid var(--accent); color:var(--accent); border-radius:8px; padding:11px 14px; text-align:left; cursor:pointer; font-family:inherit; font-size:.92rem; }
+  .sbtn:hover { background:var(--accent); color:#2a1408; }
+  .feedback { margin-top:12px; padding:12px 14px; border-radius:8px; font-size:.9rem; display:none; }
+  .feedback.show { display:block; }
+  .feedback.good { background:#16331c; border:1px solid var(--good); }
+  .feedback.warn { background:#3a2f12; border:1px solid var(--warn); }
+  .btn { background:var(--accent); border:none; color:#2a1408; font-weight:700; border-radius:8px; padding:10px 16px; cursor:pointer; }
+  .btn.ghost { background:transparent; border:1px solid var(--line); color:var(--text); font-weight:500; }
+</style>
+</head>
+<body>
+<div class="disclaimer">
+  ⚠️ <strong>Practice tool only — not official advice and not a live warning service.</strong>
+  In an emergency call <strong>000</strong>. Always follow NSW RFS, BOM, ABC Emergency, and local authorities.
+</div>
+<div class="wrap">
+  <header>
+    <h1>🔥 FireReady</h1>
+    <p class="muted">A calm household fire-readiness checklist &amp; scenario practice. Non-official, non-alarmist.</p>
+  </header>
+  <div class="tabs">
+    <button class="tab active" data-t="check">Readiness checklist</button>
+    <button class="tab" data-t="plan">My household plan</button>
+    <button class="tab" data-t="scenarios">Scenario practice</button>
+    <button class="tab" data-t="ratings">Danger ratings</button>
+    <button class="tab" data-t="links">Official sources</button>
+  </div>
+  <div id="panel"></div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const CKEY='fireready_checklist_v1';
+const CHECKS=[
+  {id:'docs', t:'Important documents', h:'IDs, insurance, deeds — in one grab-and-go spot or scanned to cloud.'},
+  {id:'meds', t:'Medications', h:'A few days of essential medicines packed and ready.'},
+  {id:'pets', t:'Pets', h:'Carriers, leads, food — and a plan for who takes them.'},
+  {id:'kids', t:'Kids', h:'Comfort item, spare clothes, and a simple "what we do" talk done.'},
+  {id:'water', t:'Water', h:'Drinking water for everyone for at least a day.'},
+  {id:'power', t:'Power & charging', h:'Phones charged, a power bank ready, torch with batteries.'},
+  {id:'gobag', t:'Go-bag', h:'One bag by the door: water, snacks, first aid, charger, cash.'},
+  {id:'fuel', t:'Car fuel', h:'Keep the tank at least half-full during fire season.'},
+  {id:'comms', t:'Communication plan', h:'Agreed meeting point + an out-of-area contact everyone can call.'},
+];
+let cState=load(CKEY,{});
+function load(k,d){ try{ return JSON.parse(localStorage.getItem(k))??d; }catch(e){ return d; } }
+
+function renderChecklist(){
+  const done=CHECKS.filter(c=>cState[c.id]).length;
+  const pct=Math.round(done/CHECKS.length*100);
+  $('panel').innerHTML=`<div class="card">
+    <h2>Household readiness</h2>
+    <p class="muted">Tick what's sorted. Saved on this device only.</p>
+    <div class="progress"><div style="width:${pct}%"></div></div>
+    <p class="muted">${done} of ${CHECKS.length} ready (${pct}%)</p>
+    <div id="items"></div>
+    <div style="margin-top:12px"><button class="btn ghost" id="resetC">Reset checklist</button></div>
+  </div>`;
+  const box=$('items');
+  CHECKS.forEach(c=>{
+    const d=document.createElement('div'); d.className='checkitem'+(cState[c.id]?' done':'');
+    d.innerHTML=`<div class="box">${cState[c.id]?'✓':''}</div><div class="label"><div class="t">${c.t}</div><div class="h">${c.h}</div></div>`;
+    d.onclick=()=>{ cState[c.id]=!cState[c.id]; localStorage.setItem(CKEY,JSON.stringify(cState)); renderChecklist(); };
+    box.appendChild(d);
+  });
+  $('resetC').onclick=()=>{ if(confirm('Reset all checklist items?')){ cState={}; localStorage.setItem(CKEY,'{}'); renderChecklist(); } };
+}
+
+const SCEN=[
+  {title:'"Watch and Act" issued nearby',
+   q:'An official Watch and Act alert covers an area near you. Conditions could change quickly. What\'s the readiness-minded move?',
+   opts:[
+     {t:'Check the official RFS app and enact your leave-early plan if unsure.',good:true,why:'Watch and Act means actively monitor official sources and be ready to act — leaving early is the safest option if you\'re not confident.'},
+     {t:'Wait until you can see flames before doing anything.',good:false,why:'Waiting to see fire is dangerous — roads and visibility can fail fast. Decide and act early.'},
+     {t:'Rely on this app for live updates.',good:false,why:'This app is practice only. Live status must come from official sources (RFS, BOM, ABC Emergency).'},
+   ]},
+  {title:'Power outage during high fire danger',
+   q:'The power goes out on a hot, windy day. What helps most?',
+   opts:[
+     {t:'Switch to a charged phone + power bank, tune to ABC local radio, keep the car fuelled.',good:true,why:'Battery radio/phone and a fuelled car keep you informed and mobile when power and internet drop.'},
+     {t:'Open all the windows and keep the fridge open to stay cool.',good:false,why:'That won\'t help readiness and can let in smoke. Focus on information and an exit plan.'},
+     {t:'Assume it\'s unrelated and ignore it.',good:false,why:'On high-danger days, treat outages as a prompt to check official warnings and your plan.'},
+   ]},
+  {title:'Smoke in the area',
+   q:'You notice heavy smoke but no official alert yet. What\'s the calm, ready response?',
+   opts:[
+     {t:'Check official warnings, close up the house, and prepare to leave if it worsens.',good:true,why:'Smoke can precede an alert. Verify officially, reduce smoke entry, and be ready to go early.'},
+     {t:'Drive toward the smoke to see what\'s happening.',good:false,why:'Never drive toward a fire. Keep distance and rely on official information.'},
+     {t:'Post about it online and wait for replies.',good:false,why:'Social posts aren\'t official warnings. Check RFS/BOM/ABC Emergency directly.'},
+   ]},
+  {title:'Leaving early',
+   q:'You\'ve decided to leave early on a dangerous day. What makes it safer?',
+   opts:[
+     {t:'Take the go-bag, pets, meds; tell your contact; use a known route away from the risk.',good:true,why:'Leaving early with essentials and a planned route is the safest choice — well before any fire arrives.'},
+     {t:'Wait for everyone to pack everything they own first.',good:false,why:'Leaving early means leaving early. Possessions can be replaced; take only essentials.'},
+     {t:'Leave without telling anyone where you\'re going.',good:false,why:'Always tell your agreed contact your plan and destination.'},
+   ]},
+];
+function renderScenarios(){
+  $('panel').innerHTML=`<div class="card"><h2>Scenario practice</h2><p class="muted">Think through calm, ready responses. These are practice prompts, not official guidance.</p><div id="scenWrap"></div></div>`;
+  const w=$('scenWrap');
+  SCEN.forEach((s,i)=>{
+    const d=document.createElement('div'); d.style.marginTop='14px'; d.style.borderTop=i?'1px solid var(--line)':'none'; d.style.paddingTop=i?'14px':'0';
+    d.innerHTML=`<h3 style="font-size:1.02rem">${s.title}</h3><p class="muted" style="margin:4px 0">${s.q}</p>`;
+    const bts=document.createElement('div'); bts.className='sbtns';
+    const fb=document.createElement('div'); fb.className='feedback';
+    s.opts.forEach(o=>{ const b=document.createElement('button'); b.className='sbtn'; b.textContent=o.t; b.onclick=()=>{ fb.className='feedback show '+(o.good?'good':'warn'); fb.innerHTML=(o.good?'✅ ':'⚠️ ')+o.why; }; bts.appendChild(b); });
+    d.appendChild(bts); d.appendChild(fb); w.appendChild(d);
+  });
+}
+
+const LINKS=[
+  {n:'Emergency — call 000',u:'tel:000',s:'Life-threatening emergencies, fire, or immediate danger.',e:true},
+  {n:'NSW Rural Fire Service (RFS)',u:'https://www.rfs.nsw.gov.au/',s:'Fire danger ratings, current incidents, "Hazards Near Me" app.'},
+  {n:'Hazards Near Me NSW',u:'https://www.rfs.nsw.gov.au/hazards-near-me',s:'Official NSW app for current warnings near you.'},
+  {n:'Bureau of Meteorology (BOM)',u:'http://www.bom.gov.au/',s:'Weather, warnings, and fire weather forecasts.'},
+  {n:'ABC Emergency',u:'https://www.abc.net.au/emergency',s:'Emergency broadcasting and local radio info.'},
+  {n:'VicEmergency (if in Victoria)',u:'https://emergency.vic.gov.au/',s:'Victorian warnings and incident map.'},
+];
+function renderLinks(){
+  $('panel').innerHTML=`<div class="card"><h2>Official sources</h2><p class="muted">Use these — not this app — for live warnings and decisions.</p><div class="links" id="lk"></div></div>`;
+  LINKS.forEach(l=>{ const a=document.createElement('a'); a.href=l.u; if(l.u.startsWith('http')){a.target='_blank'; a.rel='noopener';} if(l.e)a.className='emergency'; a.innerHTML=`${l.n}<small>${l.s}</small>`; $('lk').appendChild(a); });
+}
+
+// ---- My household plan ----
+const PKEY='fireready_plan_v1';
+const PLAN_FIELDS=[
+  {id:'meeting', t:'Meeting point', ph:'Where the household regroups (e.g. the corner shop)'},
+  {id:'contact', t:'Out-of-area contact', ph:'Someone outside the risk area everyone can call'},
+  {id:'trigger', t:'Leave-early trigger', ph:'What makes us go (e.g. any Watch and Act nearby)'},
+  {id:'pets', t:'Who takes the pets', ph:'Name + carrier location'},
+  {id:'route', t:'Primary route out', ph:'Main road away from the bush'},
+  {id:'altroute', t:'Backup route', ph:'If the main road is blocked'},
+];
+function renderPlan(){
+  const plan=load(PKEY,{});
+  $('panel').innerHTML=`<div class="card"><h2>My household plan</h2><p class="muted">Fill this in calmly, ahead of time. Saved on this device only.</p><div id="planFields"></div>
+    <div style="display:flex;gap:8px;margin-top:14px"><button class="btn" id="savePlan">Save plan</button><button class="btn ghost" id="printPlan">Print plan</button></div></div>`;
+  const wrap=$('planFields');
+  PLAN_FIELDS.forEach(f=>{ const d=document.createElement('div'); d.style.marginTop='10px'; d.innerHTML=`<label style="display:block;font-size:.82rem;color:var(--muted);margin-bottom:4px">${f.t}</label><input type="text" id="pf_${f.id}" value="${(plan[f.id]||'').replace(/"/g,'&quot;')}" placeholder="${f.ph}" style="width:100%;background:#140d08;border:1px solid var(--line);color:var(--text);border-radius:8px;padding:10px;font-family:inherit">`; wrap.appendChild(d); });
+  $('savePlan').onclick=()=>{ const p={}; PLAN_FIELDS.forEach(f=>p[f.id]=$('pf_'+f.id).value.trim()); localStorage.setItem(PKEY,JSON.stringify(p)); $('savePlan').textContent='Saved ✓'; setTimeout(()=>$('savePlan').textContent='Save plan',1200); };
+  $('printPlan').onclick=()=>{ const p={}; PLAN_FIELDS.forEach(f=>p[f.id]=$('pf_'+f.id).value.trim()); const w=window.open('','_blank'); w.document.write(`<title>Household Fire Plan</title><style>body{font-family:system-ui;padding:24px;max-width:600px}h1{font-size:20px}dt{font-weight:700;margin-top:10px}dd{margin:2px 0 0}small{color:#666}</style><h1>🔥 Household Fire Plan</h1><small>Practice tool — in an emergency call 000 and follow NSW RFS / BOM / ABC Emergency.</small><dl>${PLAN_FIELDS.map(f=>`<dt>${f.t}</dt><dd>${(p[f.id]||'—')}</dd>`).join('')}</dl>`); w.document.close(); w.print(); };
+}
+// ---- Fire danger ratings explainer (Australian Fire Danger Rating System) ----
+const RATINGS=[
+  {n:'Moderate', c:'#2e7d32', d:'Plan and prepare. Most fires can be controlled.'},
+  {n:'High', c:'#f9a825', d:'Be ready to act. Fires can be dangerous. Know your trigger to leave.'},
+  {n:'Extreme', c:'#ef6c00', d:'Take action now to protect life and property. Leaving early is safest.'},
+  {n:'Catastrophic', c:'#c62828', d:'For your survival, leave bushfire-risk areas. Homes are not designed to withstand these conditions.'},
+];
+function renderRatings(){
+  $('panel').innerHTML=`<div class="card"><h2>Fire danger ratings</h2><p class="muted">A plain-English guide to the Australian Fire Danger Rating System. Always confirm the current rating via official sources.</p><div id="rt"></div></div>`;
+  RATINGS.forEach(r=>{ const d=document.createElement('div'); d.style.cssText='border-left:6px solid '+r.c+';background:#140d08;border-radius:8px;padding:12px 14px;margin-top:10px'; d.innerHTML=`<div style="font-weight:700;color:${r.c}">${r.n}</div><div class="muted" style="color:var(--text)">${r.d}</div>`; $('rt').appendChild(d); });
+}
+const TABS={check:renderChecklist,plan:renderPlan,scenarios:renderScenarios,ratings:renderRatings,links:renderLinks};
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{ document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); TABS[t.dataset.t](); });
+renderChecklist();
+</script>
+</body>
+</html>
