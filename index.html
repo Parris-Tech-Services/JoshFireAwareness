@@ -1,0 +1,3132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JoshFireAwareness - Bendigo/Ballarat Fire Safety</title>
+    <link rel="icon" href="docs/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+    <style>
+        :root {
+            --bg: #0b1020;
+            --panel: #111a33;
+            --panel2: #0f1630;
+            --text: #e7ecff;
+            --muted: #b7c1ff;
+            --line: #243057;
+            --good: #4ade80;
+            --warn: #fbbf24;
+            --bad: #fb7185;
+            --link: #93c5fd;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Ubuntu, 'Helvetica Neue', Arial;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+        
+        a {
+            color: var(--link);
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        header {
+            padding: 20px;
+            border-bottom: 1px solid var(--line);
+            background: linear-gradient(135deg, rgba(30, 60, 114, 0.2), rgba(42, 82, 152, 0.2));
+            text-align: center;
+        }
+        
+        header h1 {
+            margin: 0 0 10px;
+            font-size: 28px;
+            letter-spacing: 0.5px;
+        }
+        
+        header .sub {
+            margin-top: 8px;
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        .status-banner {
+            padding: 15px 20px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 16px;
+            border-bottom: 1px solid var(--line);
+            background: linear-gradient(90deg, rgba(74, 222, 128, 0.1), rgba(74, 222, 128, 0.05));
+            color: var(--good);
+        }
+        
+        .status-banner.warning {
+            background: linear-gradient(90deg, rgba(251, 191, 36, 0.1), rgba(251, 191, 36, 0.05));
+            color: var(--warn);
+        }
+        
+        .status-banner.danger {
+            background: linear-gradient(90deg, rgba(251, 113, 133, 0.1), rgba(251, 113, 133, 0.05));
+            color: var(--bad);
+        }
+
+        .error-panel {
+            padding: 15px 20px;
+            background: linear-gradient(90deg, rgba(251, 113, 133, 0.15), rgba(251, 113, 133, 0.08));
+            border-bottom: 2px solid var(--bad);
+            border-top: 1px solid var(--line);
+            animation: slideDown 0.3s ease-out;
+        }
+        
+        @keyframes slideDown {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .error-content {
+            max-width: 100%;
+        }
+        
+        .error-message {
+            color: var(--text);
+            font-size: 14px;
+            line-height: 1.5;
+            margin: 0;
+        }
+        
+        .error-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .btn-sm {
+            padding: 6px 12px !important;
+            font-size: 12px !important;
+            min-height: 32px !important;
+        }
+
+        .offline-banner {
+            padding: 10px 20px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 13px;
+            border-bottom: 1px solid var(--line);
+            background: rgba(251, 191, 36, 0.1);
+            color: var(--warn);
+            display: none;
+        }
+        
+        .refresh-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            padding: 10px 20px;
+            border-bottom: 1px solid var(--line);
+            background: rgba(0, 0, 0, 0.1);
+        }
+        
+        .last-updated {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            color: var(--muted);
+        }
+        
+        #last-check-time {
+            font-weight: bold;
+            color: var(--text);
+            font-family: 'Courier New', monospace;
+        }
+        
+        .data-age-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .data-age-badge.fresh {
+            background: rgba(74, 222, 128, 0.2);
+            color: var(--good);
+            border: 1px solid var(--good);
+        }
+        
+        .data-age-badge.stale {
+            background: rgba(251, 191, 36, 0.2);
+            color: var(--warn);
+            border: 1px solid var(--warn);
+        }
+        
+        .data-age-badge.old {
+            background: rgba(251, 113, 133, 0.2);
+            color: var(--bad);
+            border: 1px solid var(--bad);
+        }
+        
+        .refresh-btn {
+            padding: 8px 14px;
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        
+        .refresh-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .container {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 16px;
+            padding: 16px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        @media (max-width: 1200px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .card {
+            background: linear-gradient(180deg, var(--panel), var(--panel2));
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 16px;
+        }
+        
+        .card h2 {
+            margin: 0 0 12px;
+            font-size: 16px;
+            border-bottom: 1px solid var(--line);
+            padding-bottom: 8px;
+        }
+        
+        .card h3 {
+            margin: 12px 0 8px;
+            font-size: 14px;
+            color: var(--muted);
+        }
+        
+        .small {
+            font-size: 13px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+        
+        .hr {
+            height: 1px;
+            background: var(--line);
+            margin: 12px 0;
+        }
+        
+        .links {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .btn {
+            padding: 10px;
+            background: var(--panel);
+            color: var(--text);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 44px;
+            font-size: 14px;
+        }
+        
+        .btn:hover {
+            background: var(--line);
+            transform: translateY(-1px);
+        }
+        
+        .btn.primary {
+            background: #12306c;
+            border-color: #294a9b;
+        }
+        
+        .btn.emergency {
+            background: #c0392b;
+            border-color: #a93226;
+        }
+        
+        .btn.emergency:hover {
+            background: #e74c3c;
+        }
+        
+        .btn.warning {
+            background: #d68910;
+            border-color: #b86f0f;
+        }
+        
+        .btn.warning:hover {
+            background: #f39c12;
+        }
+        
+        .btn.success {
+            background: #1e8449;
+            border-color: #186a3b;
+        }
+        
+        .btn.success:hover {
+            background: #27ae60;
+        }
+        
+        .kpi {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 12px 0;
+        }
+        
+        .kpi-item {
+            border: 1px solid var(--line);
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+        }
+        
+        .kpi-item .label {
+            color: var(--muted);
+            font-size: 12px;
+            margin-bottom: 6px;
+        }
+        
+        .kpi-item .value {
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        .kpi-item .value.good {
+            color: var(--good);
+        }
+        
+        .kpi-item .value.warn {
+            color: var(--warn);
+        }
+        
+        .kpi-item .value.bad {
+            color: var(--bad);
+        }
+        
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            border-radius: 20px;
+            border: 1px solid var(--line);
+            background: rgba(0, 0, 0, 0.2);
+            font-size: 12px;
+            color: var(--muted);
+        }
+        
+        .mono {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        #map {
+            height: 500px;
+            border-radius: 12px;
+            border: 1px solid var(--line);
+            overflow: hidden;
+        }
+        
+        .incidents-list {
+            max-height: 500px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .incident-item {
+            border: 1px solid var(--line);
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 10px;
+        }
+        
+        .incident-item .name {
+            font-weight: bold;
+            font-size: 13px;
+        }
+        
+        .incident-item .meta {
+            color: var(--muted);
+            font-size: 12px;
+            margin-top: 4px;
+            line-height: 1.4;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            border: 1px solid var(--line);
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        .badge.good {
+            color: var(--good);
+            border-color: var(--good);
+        }
+        
+        .badge.warn {
+            color: var(--warn);
+            border-color: var(--warn);
+        }
+        
+        .badge.bad {
+            color: var(--bad);
+            border-color: var(--bad);
+        }
+        
+        .checklist {
+            list-style: none;
+            padding: 0;
+            margin: 8px 0;
+        }
+        
+        .checklist li {
+            padding: 8px;
+            margin-bottom: 6px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            font-size: 13px;
+        }
+
+        .checklist label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            flex: 1;
+            gap: 8px;
+        }
+
+        .checklist input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .checklist input[type="checkbox"]:checked + span {
+            text-decoration: line-through;
+            color: var(--muted);
+        }
+        
+        .checklist li:before {
+            content: "";
+            display: none;
+        }
+        
+        .prayer {
+            font-style: italic;
+            background: rgba(74, 222, 128, 0.1);
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 3px solid var(--good);
+            margin-top: 10px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        
+        .footer {
+            padding: 16px;
+            color: var(--muted);
+            font-size: 12px;
+            border-top: 1px solid var(--line);
+            text-align: center;
+        }
+
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            z-index: 999;
+        }
+
+        .modal.open {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(180deg, var(--panel), var(--panel2));
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            max-width: 520px;
+            width: 100%;
+            padding: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+        }
+
+        .modal-title {
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .modal-body {
+            font-size: 13px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 12px;
+        }
+        
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+        
+        .input-group label {
+            font-size: 12px;
+            color: var(--muted);
+        }
+        
+        input, select {
+            background: var(--panel);
+            color: var(--text);
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            padding: 8px;
+            font-size: 13px;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--link);
+        }
+
+        input:focus-visible,
+        select:focus-visible,
+        textarea:focus-visible,
+        .btn:focus-visible {
+            outline: 2px solid var(--link);
+            outline-offset: 2px;
+        }
+        
+        .refresh-info {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-top: 8px;
+            font-size: 12px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .wind-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+
+        .wind-row input[type="number"] {
+            width: 90px;
+        }
+
+        .checkin-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        .checkin-row input {
+            flex: 1;
+            min-width: 140px;
+        }
+
+        .day-card-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .day-card-title .date {
+            font-size: 12px;
+            color: var(--muted);
+            white-space: nowrap;
+        }
+
+        .day-card-hidden {
+            opacity: 0.7;
+            border-style: dashed;
+        }
+
+        .modal-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .modal-form textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        #countdown-display {
+            margin-top: 12px;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 14px;
+            background: rgba(74, 222, 128, 0.1);
+            color: var(--good);
+            transition: all 0.3s ease;
+        }
+        
+        #countdown-display.warn {
+            background: rgba(251, 191, 36, 0.1);
+            color: var(--warn);
+        }
+        
+        #countdown-display.passed {
+            background: rgba(74, 222, 128, 0.1);
+            color: var(--good);
+        }
+        
+        @media (max-width: 768px) {
+            header {
+                padding: 12px;
+            }
+
+            header h1 {
+                font-size: 20px;
+            }
+
+            header .sub {
+                font-size: 12px;
+            }
+            
+            .container {
+                padding: 8px;
+                grid-template-columns: 1fr;
+                gap: 0;
+            }
+            
+            .sidebar {
+                max-height: none;
+                border-right: none;
+                border-bottom: 1px solid var(--line);
+                padding-right: 8px;
+                padding-bottom: 12px;
+            }
+
+            #map {
+                height: 300px;
+            }
+            
+            .btn {
+                padding: 10px 16px;
+                min-height: 44px;
+            }
+            
+            button.btn, a.btn {
+                width: 100%;
+            }
+            
+            .action-buttons, .card-actions, .links {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .action-buttons .btn, .card-actions .btn, .links .btn {
+                width: 100%;
+            }
+            
+            .card {
+                margin-bottom: 12px;
+            }
+            
+            .kpi {
+                flex-direction: column;
+            }
+            
+            .wind-row input, .wind-row select {
+                width: 100%;
+                margin-bottom: 8px;
+            }
+            
+            .modal-content {
+                width: 95vw;
+            }
+            
+            .refresh-bar {
+                flex-direction: column;
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            header h1 {
+                font-size: 18px;
+            }
+
+            header .sub {
+                font-size: 11px;
+            }
+            
+            .btn {
+                padding: 8px 12px;
+                font-size: 13px;
+                min-height: 40px;
+            }
+            
+            .card h2 {
+                font-size: 14px;
+            }
+            
+            #map {
+                height: 250px;
+            }
+            
+            .modal-content {
+                width: 90vw;
+            }
+
+            .small {
+                font-size: 11px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>JoshFireAwareness</h1>
+        <div class="sub">
+            Live awareness for <strong>Bendigo/Epsom</strong> and the <strong>Bendigo <-> Ballarat</strong> drive.<br>
+            <span class="small">Always follow VicEmergency + BOM as the source of truth.</span>
+        </div>
+        <div id="countdown-display" aria-live="polite">Time until safe departure (8:00am Sat): --</div>
+    </header>
+
+    <div class="status-banner" id="mainStatus" aria-live="polite">
+        OK Epsom/Bendigo: Currently NO Emergency Warning
+    </div>
+
+    <div class="offline-banner" id="offlineBanner" aria-live="polite">
+        Offline mode: data may be stale.
+    </div>
+
+    <div class="refresh-bar">
+        <div class="last-updated" aria-live="polite">
+            Data checked: <span id="last-check-time">Never</span>
+                <span class="small" style="margin-left:8px; color:var(--muted);">Source: <span id="feed-source">-</span></span>
+                <span class="small" style="margin-left:8px; color:var(--muted);">Status: <span id="offline-indicator">Online</span></span>
+            <span class="data-age-badge fresh" id="data-age">Not loaded</span>
+        </div>
+        <button class="btn primary refresh-btn" id="refresh-data" onclick="manualRefresh()" aria-label="Check latest incident data">Check Latest Info</button>
+    </div>
+
+    <!-- Error/Status Notifications -->
+    <div id="errorPanel" class="error-panel" style="display: none;" role="alert" aria-live="polite">
+        <div class="error-content">
+            <div class="error-message"></div>
+            <div class="error-actions" style="margin-top: 12px; display: flex; gap: 8px;">
+                <button class="btn warning btn-sm" id="errorRetryBtn" style="display: none;">🔄 Retry</button>
+                <button class="btn btn-sm" id="errorDismissBtn">Dismiss</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- LEFT SIDEBAR -->
+        <div class="sidebar">
+            <!-- Locations -->
+            <div class="card">
+                <h2>Locations</h2>
+                <div class="small">Set your home and destination. Incidents will be pulled nearby.</div>
+                <div class="hr"></div>
+                
+                <div class="input-group">
+                    <label for="homeAddr">Home (Epsom)</label>
+                    <input id="homeAddr" value="53 Buckland Street, Epsom VIC 3551" aria-label="Home address" />
+                    <div class="action-buttons">
+                        <button class="btn primary" id="homeGeocode" aria-label="Geocode home address">Geocode</button>
+                        <button class="btn" id="homeHere" aria-label="Use GPS for home location">Use GPS</button>
+                    </div>
+                    <div class="pill"><span>Coords:</span> <span class="mono" id="homeCoords">--</span></div>
+                </div>
+                
+                <div class="hr"></div>
+                
+                <div class="input-group">
+                    <label for="destAddr">Destination (Alfredton)</label>
+                    <input id="destAddr" value="1 Montadale Court, Alfredton VIC 3350" aria-label="Destination address" />
+                    <div class="action-buttons">
+                        <button class="btn primary" id="destGeocode" aria-label="Geocode destination address">Geocode</button>
+                        <button class="btn" id="destHere" aria-label="Use GPS for destination location">Use GPS</button>
+                    </div>
+                    <div class="pill"><span>Coords:</span> <span class="mono" id="destCoords">--</span></div>
+                </div>
+                
+                <div class="hr"></div>
+                
+                <div class="kpi">
+                    <div class="kpi-item">
+                        <div class="label">Home Risk</div>
+                        <div class="value" id="homeRisk" aria-live="polite">--</div>
+                        <div class="small" id="homeRiskWhy"></div>
+                    </div>
+                    <div class="kpi-item">
+                        <div class="label">Route Risk</div>
+                        <div class="value" id="routeRisk" aria-live="polite">--</div>
+                        <div class="small" id="routeRiskWhy"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Refresh -->
+            <div class="card">
+                <h2>Refresh</h2>
+                <button class="btn primary" id="refreshBtn" style="width: 100%;">Refresh Incidents + Route</button>
+                <button class="btn" id="clearBtn" style="width: 100%; margin-top: 8px;" aria-label="Clear cached locations">Clear Cached Locations</button>
+                <div class="refresh-info">
+                    <span class="pill"><span>Last:</span> <span class="mono" id="lastUpdate">--</span></span>
+                    <span class="pill"><span>Auto:</span> every 5m</span>
+                </div>
+            </div>
+
+            <!-- Wind -->
+            <div class="card">
+                <h2>Wind Right Now</h2>
+                <div class="small">Check BOM and update here.</div>
+                <div class="wind-row">
+                    <label class="small" for="windDir">Direction</label>
+                    <select id="windDir" aria-label="Wind direction">
+                        <option value="">--</option>
+                        <option value="N">N</option>
+                        <option value="NE">NE</option>
+                        <option value="E">E</option>
+                        <option value="SE">SE</option>
+                        <option value="S">S</option>
+                        <option value="SW">SW</option>
+                        <option value="W">W</option>
+                        <option value="NW">NW</option>
+                    </select>
+                    <label class="small" for="windSpeed">Speed</label>
+                    <input id="windSpeed" type="number" min="0" step="1" placeholder="km/h" aria-label="Wind speed in kilometers per hour" />
+                </div>
+                <div class="small" id="windSummary" style="margin-top: 8px;">Wind not set.</div>
+                <div style="margin-top:8px; display:flex; align-items:center; gap:12px;">
+                    <svg id="windCompass" width="72" height="72" viewBox="-50 -50 100 100" aria-hidden="true" role="img">
+                        <circle r="40" fill="none" stroke="var(--line)" stroke-width="2"></circle>
+                        <g id="windCompassNeedle" transform="rotate(0)">
+                            <path d="M0,-30 L8,0 L0,-10 L-8,0 Z" fill="var(--accent)"></path>
+                        </g>
+                    </svg>
+                    <div class="small">Compass shows selected wind direction.</div>
+                </div>
+                <div class="links" style="margin-top: 8px;">
+                    <a href="https://www.bom.gov.au/" class="btn" target="_blank">BOM Wind</a>
+                </div>
+            </div>
+
+            <!-- Kids Checklist -->
+            <div class="card">
+                <h2>Kids Checklist</h2>
+                <div class="small">Quick kit for Sylvie & Elias — add to Day Cards.</div>
+                <div class="hr"></div>
+                <ul class="small" id="kidsChecklistItems" style="margin:8px 0 0 16px;">
+                    <li>Water bottles (x2)</li>
+                    <li>Spare clothes & jumper</li>
+                    <li>Essential medication</li>
+                    <li>Snacks & drinks</li>
+                    <li>Comfort toy / blanket</li>
+                    <li>IDs & emergency contacts</li>
+                    <li>Face masks</li>
+                    <li>Phone + charger</li>
+                    <li>Plan: meeting point</li>
+                    <li>Vehicle: full tank</li>
+                </ul>
+                <div class="card-actions" style="margin-top:8px;">
+                    <button class="btn primary" id="addKidsChecklist" aria-label="Add kids checklist to day cards">Add to Day Cards</button>
+                    <button class="btn" id="openKidsChecklistModal" aria-label="View kids checklist">View</button>
+                </div>
+            </div>
+
+            <!-- Incident Level Explainers -->
+            <div class="card">
+                <h2>Incident Levels</h2>
+                <div class="small">Tap to see what each level means in plain English.</div>
+                <div class="hr"></div>
+                <div class="action-buttons">
+                    <button class="btn emergency" id="explainEmergency" aria-label="Explain Emergency Warning">Emergency Warning</button>
+                    <button class="btn warning" id="explainWatch" aria-label="Explain Watch and Act">Watch and Act</button>
+                    <button class="btn success" id="explainAdvice" aria-label="Explain Advice">Advice</button>
+                </div>
+                <div style="margin-top:8px; display:flex; gap:8px;">
+                    <a href="docs/INCIDENT_DICTIONARY.md" class="btn" target="_blank">Incident Dictionary</a>
+                    <button class="btn" id="openDictModal">Quick Definitions</button>
+                </div>
+            </div>
+
+            <!-- Official Links -->
+            <div class="card">
+                <h2>Official Links</h2>
+                <div class="links">
+                    <a href="https://emergency.vic.gov.au/" class="btn emergency" target="_blank">VicEmergency (Map)</a>
+                    <a href="tel:000" class="btn emergency">Call 000 - Emergency</a>
+                    <a href="tel:1800226226" class="btn warning">1800 226 226</a>
+                    <a href="https://www.cfa.vic.gov.au/" class="btn warning" target="_blank">CFA Victoria</a>
+                    <a href="https://www.bom.gov.au/" class="btn success" target="_blank">BOM Weather</a>
+                    <a href="https://www.abc.net.au/listen/live/centralvic" class="btn" target="_blank">ABC Central VIC</a>
+                    <a href="https://bushfire.io/" class="btn" target="_blank">Bushfire.io Map</a>
+                </div>
+            </div>
+
+            <!-- Check-In -->
+            <div class="card">
+                <h2>I'm Safe Check-In</h2>
+                <div class="small">Send a quick SMS update.</div>
+                <div class="checkin-row">
+                    <input id="checkinPhone" placeholder="Phone number" aria-label="Phone number for SMS" />
+                    <button class="btn" id="checkinSend" aria-label="Send SMS check-in">Send SMS</button>
+                </div>
+                <div class="small" id="checkinPreview" style="margin-top: 8px;" aria-live="polite"></div>
+            </div>
+
+            <!-- Monitoring Quick Check -->
+            <div class="card">
+                <h2>Monitoring Quick Check</h2>
+                <div class="small">Use this every 30-60 minutes during high risk.</div>
+                <ul class="checklist" style="margin-top: 8px;">
+                    <li>VicEmergency: check advice level for Bendigo/Epsom</li>
+                    <li>Incidents loaded + last update time</li>
+                    <li>BOM wind direction and change timing</li>
+                    <li>Road closures: VicTraffic / ABC Central VIC</li>
+                    <li>ABC Radio on for alerts</li>
+                </ul>
+                <div class="links" style="margin-top: 8px;">
+                    <a href="docs/MONITORING.md" class="btn" target="_blank">Open Monitoring Plan</a>
+                </div>
+            </div>
+
+            <!-- Day Cards -->
+            <div class="card">
+                <h2>Day Cards</h2>
+                <div class="small">Cards auto-hide after the day has passed.</div>
+                <div class="card-actions">
+                    <button class="btn primary" id="addDayCard" aria-label="Add a day card">Add Day Card</button>
+                    <button class="btn" id="toggleHiddenCards" aria-label="Show or hide hidden day cards">Show hidden</button>
+                </div>
+            </div>
+            <div id="dayCards"></div>
+
+            <!-- Decision Rules -->
+            <div class="card">
+                <h2>When to ACT</h2>
+                <div class="small">
+                    <strong>LEAVE immediately if:</strong><br>
+                    - VicEmergency: Watch & Act or Emergency Warning<br>
+                    - You see flames or heavy smoke<br>
+                    - Emergency Alert SMS arrives<br>
+                    - ABC Radio announces evacuation<br>
+                    - Your gut says "not safe"<br>
+                    <br>
+                    <strong>If in doubt, leave early.</strong>
+                </div>
+            </div>
+
+            <!-- Scripture + Worship -->
+            <div class="card">
+                <h2>Scripture + Worship</h2>
+                <div class="small">
+                    <strong>Psalm 23:1-2</strong><br>
+                    The LORD is my shepherd; I lack nothing. He makes me lie down in green pastures.
+                </div>
+                <div class="hr"></div>
+                <div class="small">
+                    <strong>Psalm 16 (Sons of Korah)</strong><br>
+                    Keep me safe, my God, for in you I take refuge.
+                </div>
+                <div class="hr"></div>
+                <div class="links">
+                    <a href="https://www.youtube.com/watch?v=TyOT6ghkcrA" class="btn" target="_blank">Keep Me Safe, O Lord (Worship)</a>
+                </div>
+            </div>
+
+            <!-- Kids Travel Checklist -->
+            <div class="card">
+                <h2>Kids Travel Checklist</h2>
+                <ul class="checklist">
+                    <li>Nappies and wipes</li>
+                    <li>Snacks and water</li>
+                    <li>Comfort items (toy, dummy, blanket)</li>
+                    <li>Spare clothes</li>
+                    <li>Stroller or carrier</li>
+                    <li>Check car seats are secure</li>
+                </ul>
+            </div>
+
+            <!-- Evacuation Centres -->
+            <div class="card">
+                <h2>Evacuation Centres</h2>
+                <div class="small">Find nearest emergency evacuation centres. Use address or location.</div>
+                <div style="display: flex; gap: 6px; margin-top: 8px;">
+                    <input 
+                        type="text" 
+                        id="evacuationSearch" 
+                        placeholder="Enter address or suburb..." 
+                        style="flex: 1; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px;"
+                        aria-label="Search for evacuation centres"
+                    />
+                    <button class="btn" id="searchEvacCentres">Search</button>
+                </div>
+                <div id="evacuationResults" style="margin-top: 12px; max-height: 300px; overflow-y: auto;">
+                    <div class="small">Enter location and click Search.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT MAIN CONTENT -->
+        <div class="main-content">
+            <!-- Map & Incidents -->
+            <div class="card">
+                <h2>Live Incident Map</h2>
+                <div id="map" role="img" aria-label="Live incident map"></div>
+                <div class="small" style="margin-top: 8px;">
+                    Circles = 50km radius. Open the official links above if the map doesn't load.
+                </div>
+            </div>
+
+            <!-- Incidents List -->
+            <div class="card">
+                <h2>Nearby Incidents</h2>
+                <div class="action-buttons">
+                    <button class="btn" id="showHomeBtn" aria-label="Show incidents near home">Show near Home</button>
+                    <button class="btn" id="showDestBtn" aria-label="Show incidents near destination">Show near Destination</button>
+                    <button class="btn" id="showRouteBtn" aria-label="Show incidents near route">Show near Route</button>
+                    <select id="radiusKm" class="pill" style="padding: 8px;" aria-label="Incident search radius in kilometers">
+                        <option value="50">50 km</option>
+                        <option value="100">100 km</option>
+                        <option value="200" selected>200 km</option>
+                        <option value="300">300 km</option>
+                    </select>
+                    <label class="pill" style="display:flex; align-items:center; gap:6px; padding: 6px 10px;">
+                        <input type="checkbox" id="todayOnly" aria-label="Show only today's incidents" />
+                        <span>Today only</span>
+                    </label>
+                </div>
+                <div class="hr"></div>
+                <div class="incidents-list" id="incList">
+                    <div class="small">Click "Refresh" to load incidents.</div>
+                </div>
+            </div>
+
+            <!-- Travel Notes -->
+            <div class="card">
+                <h2>Travel Safety Notes</h2>
+                <ul class="checklist">
+                    <li>Check VicEmergency before leaving</li>
+                    <li>Full tank of fuel</li>
+                    <li>Water, snacks, nappies, wipes, spare clothes (Sylvie &amp; Elias)</li>
+                    <li>Comfort items: favourite toy / dummy / small blanket</li>
+                    <li>Car seats checked and secured</li>
+                    <li>Phone fully charged + car charger</li>
+                    <li>ABC Radio tuned in while driving</li>
+                    <li>If smoke heavy: pull over, close windows, check VicEmergency</li>
+                </ul>
+            </div>
+
+            <!-- Live Traffic -->
+            <div class="card">
+                <h2>Live Traffic</h2>
+                <div class="small">Open Google Maps for live ETA and traffic.</div>
+                <div class="links" style="margin-top: 8px;">
+                    <a href="https://www.google.com/maps" class="btn" id="googleRouteLink" target="_blank">Open Route in Google Maps</a>
+                </div>
+            </div>
+
+            <!-- Prayer + Protection -->
+            <div class="card">
+                <h2>Prayer + Protection</h2>
+                <div class="small">
+                    <strong>Psalm 91:1-2</strong><br>
+                    Whoever dwells in the shelter of the Most High will rest in the shadow of the Almighty.
+                </div>
+                <div class="hr"></div>
+                <div class="small">
+                    <strong>Psalm 121:7-8</strong><br>
+                    The LORD will watch over your coming and going both now and forevermore.
+                </div>
+                <div class="hr"></div>
+                <div class="small">
+                    <strong>Isaiah 41:10</strong><br>
+                    Do not fear, for I am with you; I will strengthen you and uphold you with my righteous right hand.
+                </div>
+                <div class="hr"></div>
+                <div class="small">
+                    <strong>Proverbs 3:5-6</strong><br>
+                    Trust in the LORD with all your heart and lean not on your own understanding.
+                </div>
+                <div class="hr"></div>
+                <div class="small">
+                    <strong>John 14:27</strong><br>
+                    Peace I leave with you; my peace I give you. Do not let your hearts be troubled.
+                </div>
+                <div class="hr"></div>
+                <div class="small">
+                    <strong>Serenity Prayer</strong><br>
+                    God, grant me the serenity to accept the things I cannot change,
+                    courage to change the things I can, and wisdom to know the difference.
+                </div>
+                <div class="hr"></div>
+                <div class="small">
+                    Remember to pray, breathe, and trust His protection today.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        Not emergency instructions. If in danger, call <strong>000</strong>. This is for awareness only. Always follow official sources.
+    </div>
+
+    <div class="modal" id="levelModal" role="dialog" aria-modal="true" aria-labelledby="levelModalTitle" aria-describedby="levelModalBody">
+        <div class="modal-content">
+            <div class="modal-title" id="levelModalTitle">Incident Level</div>
+            <div class="modal-body" id="levelModalBody"></div>
+            <div class="modal-actions">
+                <button class="btn" id="closeLevelModal">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="dayCardModal" role="dialog" aria-modal="true" aria-labelledby="dayCardModalTitle" aria-describedby="dayCardModalBody">
+        <div class="modal-content">
+            <div class="modal-title" id="dayCardModalTitle">Day Card</div>
+            <div class="modal-body" id="dayCardModalBody">
+                <div class="modal-form">
+                    <label for="dayCardTitle" class="small">Title</label>
+                    <input id="dayCardTitle" type="text" aria-label="Day card title" />
+                    <label for="dayCardDate" class="small">Date</label>
+                    <input id="dayCardDate" type="date" aria-label="Day card date" />
+                    <label for="dayCardItems" class="small">Items (one per line)</label>
+                    <textarea id="dayCardItems" aria-label="Day card items, one per line"></textarea>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn" id="cancelDayCard">Cancel</button>
+                <button class="btn primary" id="saveDayCard">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="dictModal" role="dialog" aria-modal="true" aria-labelledby="dictModalTitle" aria-describedby="dictModalBody">
+        <div class="modal-content">
+            <div class="modal-title" id="dictModalTitle">Incident Dictionary</div>
+            <div class="modal-body" id="dictModalBody">
+                <div class="small">Loading...</div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn" id="closeDictModal">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+    <script>
+        // ============================================================================
+        // JOSHFIREAWARENESS - CONSOLIDATED VERSION (ChatGPT + Claude)
+        // ============================================================================
+
+        const FEEDS = {
+            // Official EMV incident feed (may block file:// origins due to CORS)
+            incidentsVicEmergency: "https://data.emergency.vic.gov.au/Show?pageId=getIncidentJSON",
+            // Local/serverless proxy endpoint (preferred if available)
+            incidentsVicEmergencyProxy: "/api/emv",
+            // ArcGIS fallback feed
+            incidentsArcGISLayer0: "https://emapdev.ffm.vic.gov.au/arcgis/rest/services/Incidents_all/FeatureServer/0/query",
+            osrmRoute: "https://router.project-osrm.org/route/v1/driving"
+        };
+
+        const DEFAULTS = {
+            radiusKm: 200,
+            routeBufferKm: 10,
+            homeZoom: 10,
+            homeFallback: { lat: -36.717, lon: 144.275 },
+            destFallback: { lat: -37.548, lon: 143.798 }
+        };
+
+        const $ = (id) => document.getElementById(id);
+
+        const state = {
+            home: { address: "", lat: null, lon: null },
+            dest: { address: "", lat: null, lon: null },
+            mode: "home",
+            incidents: [],
+            incidentsHome: [],
+            incidentsDest: [],
+            incidentsRoute: [],
+            routes: [],
+            chosenRouteIdx: 0,
+            todayOnly: true,
+            dayCards: [],
+            wind: { dir: "", speed: "" },
+            checkinPhone: ""
+        };
+
+        // Refresh control state
+        let lastRefreshTime = null;
+        let isRefreshDisabled = false;
+        let map = null;
+        let lastFeedSource = null;
+
+        // ============================================================================
+        // UTILITIES
+        // ============================================================================
+        function fmt(n, digits = 3) {
+            return n == null || Number.isNaN(n) ? "--" : Number(n).toFixed(digits);
+        }
+
+        function km(n) {
+            return n == null ? "--" : `${n.toFixed(1)} km`;
+        }
+
+        function haversineKm(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const toRad = (d) => (d * Math.PI) / 180;
+            const dLat = toRad(lat2 - lat1);
+            const dLon = toRad(lon2 - lon1);
+            const a =
+                Math.sin(dLat / 2) ** 2 +
+                Math.cos(toRad(lat1)) *
+                    Math.cos(toRad(lat2)) *
+                    Math.sin(dLon / 2) ** 2;
+            return 2 * R * Math.asin(Math.sqrt(a));
+        }
+
+        function bearingDeg(lat1, lon1, lat2, lon2) {
+            const toRad = (d) => (d * Math.PI) / 180;
+            const toDeg = (r) => (r * 180) / Math.PI;
+            const y = Math.sin(toRad(lon2 - lon1)) * Math.cos(toRad(lat2));
+            const x =
+                Math.cos(toRad(lat1)) * Math.sin(toRad(lat2)) -
+                Math.sin(toRad(lat1)) *
+                    Math.cos(toRad(lat2)) *
+                    Math.cos(toRad(lon2 - lon1));
+            let brng = toDeg(Math.atan2(y, x));
+            brng = (brng + 360) % 360;
+            return brng;
+        }
+
+        function compass(b) {
+            const dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+            return dirs[Math.round(b / 45) % 8];
+        }
+
+        function nowStr() {
+            const d = new Date();
+            return d.toLocaleString(undefined, {
+                weekday: "short",
+                year: "numeric",
+                month: "short",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit"
+            });
+        }
+
+        function todayKey() {
+            return new Date().toISOString().slice(0, 10);
+        }
+
+        function toDateKey(d) {
+            return d.toISOString().slice(0, 10);
+        }
+
+        function formatCardDate(dateKey) {
+            if (!dateKey) return "";
+            const d = new Date(`${dateKey}T00:00:00`);
+            return d.toLocaleDateString(undefined, {
+                weekday: "short",
+                day: "2-digit",
+                month: "short"
+            });
+        }
+
+        function relativeTitleForDate(dateKey) {
+            if (!dateKey) return "Day Card";
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const target = new Date(`${dateKey}T00:00:00`);
+            const diffDays = Math.round((target - today) / (24 * 60 * 60 * 1000));
+            if (diffDays === 0) return "Today";
+            if (diffDays === 1) return "Tomorrow";
+            return "Upcoming";
+        }
+
+        function updateWindSummary() {
+            const dir = state.wind.dir;
+            const speed = state.wind.speed;
+            const summary = $("windSummary");
+            const needle = $("windCompassNeedle");
+            if (!dir && !speed) {
+                summary.textContent = "Wind not set.";
+                if (needle) needle.setAttribute("transform", "rotate(0)");
+                return;
+            }
+            if (dir && speed) {
+                summary.textContent = `Wind ${dir} at ${speed} km/h.`;
+            } else if (dir) {
+                summary.textContent = `Wind direction: ${dir}.`;
+            } else {
+                summary.textContent = `Wind speed: ${speed} km/h.`;
+            }
+            if (needle && dir) {
+                const deg = windDirToDeg(dir);
+                needle.setAttribute("transform", `rotate(${deg})`);
+            }
+        }
+
+        function windDirToDeg(dir) {
+            const map = { N: 0, NE: 45, E: 90, SE: 135, S: 180, SW: 225, W: 270, NW: 315 };
+            return map[dir] ?? 0;
+        }
+
+        function updateOfflineBanner() {
+            const banner = $("offlineBanner");
+            if (!banner) return;
+            banner.style.display = navigator.onLine ? "none" : "block";
+        }
+
+        function updateGoogleRouteLink() {
+            const home = (state.home.address || "").trim();
+            const dest = (state.dest.address || "").trim();
+            const link = $("googleRouteLink");
+            if (!link) return;
+            if (!home || !dest) {
+                link.href = "https://www.google.com/maps";
+                return;
+            }
+            const base = "https://www.google.com/maps/dir/?api=1";
+            const params = new URLSearchParams({
+                origin: home,
+                destination: dest,
+                travelmode: "driving"
+            });
+            link.href = `${base}&${params.toString()}`;
+        }
+
+        function updateCheckin() {
+            const phone = (state.checkinPhone || "").trim();
+            const preview = $("checkinPreview");
+            const btn = $("checkinSend");
+            const home = (state.home.address || "").trim();
+            const dest = (state.dest.address || "").trim();
+            const messageBase = "We're safe. Heading from";
+            const message =
+                home && dest
+                    ? `${messageBase} ${home} to ${dest}.`
+                    : "We're safe. Will update again soon.";
+            const smsBase = `sms:${encodeURIComponent(phone)}`;
+            const smsHref = phone ? `${smsBase}?body=${encodeURIComponent(message)}` : "";
+
+            preview.textContent = message;
+            btn.disabled = !phone;
+            btn.setAttribute("data-sms", smsHref);
+        }
+
+        function escapeHtml(s) {
+            return String(s)
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;");
+        }
+
+        // ============================================================================
+        // GEOCODING
+        // ============================================================================
+        async function geocodeAddress(q) {
+            try {
+                const url =
+                    "https://nominatim.openstreetmap.org/search?format=json&limit=1&q=" +
+                    encodeURIComponent(q);
+                const res = await fetch(url, {
+                    headers: { Accept: "application/json" }
+                });
+                if (!res.ok) throw new Error("Geocode service unavailable");
+                const data = await res.json();
+                if (!data || !data.length) throw new Error("Address not found");
+                return {
+                    lat: Number(data[0].lat),
+                    lon: Number(data[0].lon),
+                    display: data[0].display_name
+                };
+            } catch (err) {
+                throw new Error(`Geocoding failed: ${err.message}. Try a different address or use GPS.`);
+            }
+        }
+
+        async function useGPS() {
+            return new Promise((resolve, reject) => {
+                if (!navigator.geolocation) return reject(new Error("No GPS"));
+                navigator.geolocation.getCurrentPosition(
+                    (pos) =>
+                        resolve({
+                            lat: pos.coords.latitude,
+                            lon: pos.coords.longitude
+                        }),
+                    (err) => reject(err),
+                    { enableHighAccuracy: true, timeout: 10000 }
+                );
+            });
+        }
+
+        // ============================================================================
+        // STORAGE
+        // ============================================================================
+        function loadCached() {
+            try {
+                const raw = localStorage.getItem("JoshFireAwareness.v1");
+                if (!raw) return;
+                const obj = JSON.parse(raw);
+                if (obj?.home) {
+                    state.home = { ...state.home, ...obj.home };
+                }
+                if (obj?.dest) {
+                    state.dest = { ...state.dest, ...obj.dest };
+                }
+                if (obj?.radiusKm) {
+                    $("radiusKm").value = String(obj.radiusKm);
+                }
+                if (typeof obj?.todayOnly === "boolean") {
+                    state.todayOnly = obj.todayOnly;
+                    $("todayOnly").checked = obj.todayOnly;
+                }
+                if (Array.isArray(obj?.dayCards)) {
+                    state.dayCards = obj.dayCards.map((card) => {
+                        const autoTitle =
+                            typeof card.autoTitle === "boolean"
+                                ? card.autoTitle
+                                : ["Tonight", "Today", "Tomorrow"].includes(card.title);
+                        return { ...card, autoTitle };
+                    });
+                }
+                if (obj?.wind) {
+                    state.wind = {
+                        dir: String(obj.wind.dir || ""),
+                        speed: String(obj.wind.speed || "")
+                    };
+                    $("windDir").value = state.wind.dir;
+                    $("windSpeed").value = state.wind.speed;
+                    updateWindSummary();
+                }
+                if (typeof obj?.checkinPhone === "string") {
+                    state.checkinPhone = obj.checkinPhone;
+                    $("checkinPhone").value = obj.checkinPhone;
+                    updateCheckin();
+                }
+            } catch (e) {}
+        }
+
+        function saveCached() {
+            const obj = {
+                home: {
+                    address: state.home.address,
+                    lat: state.home.lat,
+                    lon: state.home.lon
+                },
+                dest: {
+                    address: state.dest.address,
+                    lat: state.dest.lat,
+                    lon: state.dest.lon
+                },
+                radiusKm: Number($("radiusKm").value),
+                todayOnly: Boolean(state.todayOnly),
+                dayCards: state.dayCards,
+                wind: state.wind,
+                checkinPhone: state.checkinPhone
+            };
+            localStorage.setItem("JoshFireAwareness.v1", JSON.stringify(obj));
+        }
+
+        function clearCached() {
+            localStorage.removeItem("JoshFireAwareness.v1");
+        }
+
+        function defaultDayCards() {
+            const today = new Date();
+            const tomorrow = new Date();
+            tomorrow.setDate(today.getDate() + 1);
+            return [
+                makeTodayCard(toDateKey(today)),
+                {
+                    id: `day-${Math.random().toString(16).slice(2)}`,
+                    title: "Tomorrow",
+                    date: toDateKey(tomorrow),
+                    items: [
+                        "Route: Calder Hwy -> Western Fwy",
+                        "Distance: ~95km (1h 15m)",
+                        "Depart: 8:00-9:00am (cooler, safer)",
+                        "Conditions: High danger (improving)",
+                        "Psalm 23:1-2"
+                    ],
+                    hidden: false,
+                    autoTitle: true
+                }
+            ];
+        }
+
+        let showHiddenDayCards = false;
+
+        function defaultTodayItems() {
+            return [
+                "6:30pm: Simple dinner (dairy-free)",
+                "7:00pm: Wind-down, dark room, fan",
+                "7:30pm: Check VicEmergency",
+                "8:00pm: Bed time",
+                "ABC Radio on low volume"
+            ];
+        }
+
+        function makeTodayCard(dateKey) {
+            return {
+                id: `day-${Math.random().toString(16).slice(2)}`,
+                title: "Today",
+                date: dateKey,
+                items: defaultTodayItems(),
+                hidden: false,
+                autoTitle: true
+            };
+        }
+
+        function ensureTodayCard() {
+            const key = todayKey();
+            const hasToday = state.dayCards.some((card) => card.date === key);
+            if (!hasToday) {
+                state.dayCards.push(makeTodayCard(key));
+                saveCached();
+            }
+        }
+
+        function renderDayCards() {
+            const container = $("dayCards");
+            if (!container) return;
+            container.innerHTML = "";
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const visibleCards = state.dayCards.filter((card) => {
+                if (!card || !card.date) return false;
+                const cardDate = new Date(`${card.date}T00:00:00`);
+                if (cardDate < today) return false;
+                if (card.hidden && !showHiddenDayCards) return false;
+                return true;
+            });
+
+            if (!visibleCards.length) {
+                const empty = document.createElement("div");
+                empty.className = "card";
+                empty.innerHTML = `<div class="small">No active day cards. Add one if needed.</div>`;
+                container.appendChild(empty);
+                return;
+            }
+
+            for (const card of visibleCards) {
+                const cardEl = document.createElement("div");
+                cardEl.className = `card${card.hidden ? " day-card-hidden" : ""}`;
+                const dateLabel = formatCardDate(card.date);
+                const titleText = card.autoTitle
+                    ? relativeTitleForDate(card.date)
+                    : card.title || "Day Card";
+                const items = Array.isArray(card.items) ? card.items : [];
+                
+                // Initialize checklist state if missing
+                if (!card.checklist) card.checklist = {};
+                
+                const itemHtml = items.length
+                    ? `<ul class="checklist">${items
+                          .map((i, idx) => {
+                              const itemId = `${card.id}-${idx}`;
+                              const isChecked = card.checklist[itemId] ? 'checked' : '';
+                              return `<li><label><input type="checkbox" class="checklist-item" data-card-id="${card.id}" data-item-idx="${idx}" ${isChecked} /> <span>${escapeHtml(i)}</span></label></li>`;
+                          })
+                          .join("")}</ul>`
+                    : `<div class="small">No items yet.</div>`;
+
+                cardEl.innerHTML = `
+                    <div class="day-card-title">
+                        <h2>${escapeHtml(titleText)}</h2>
+                        <div class="date">${escapeHtml(dateLabel)}</div>
+                    </div>
+                    ${itemHtml}
+                    <div class="card-actions">
+                        <button class="btn" data-action="edit" data-id="${card.id}">Edit</button>
+                        <button class="btn" data-action="hide" data-id="${card.id}">
+                            ${card.hidden ? "Unhide" : "Hide"}
+                        </button>
+                        <button class="btn warning" data-action="delete" data-id="${card.id}">Delete</button>
+                    </div>
+                `;
+                container.appendChild(cardEl);
+            }
+
+            // Wire up checklist item toggles
+            document.querySelectorAll('.checklist-item').forEach((checkbox) => {
+                checkbox.addEventListener('change', (event) => {
+                    const cardId = event.target.getAttribute('data-card-id');
+                    const itemIdx = parseInt(event.target.getAttribute('data-item-idx'), 10);
+                    const card = state.dayCards.find((c) => c.id === cardId);
+                    if (card) {
+                        if (!card.checklist) card.checklist = {};
+                        const itemId = `${cardId}-${itemIdx}`;
+                        if (event.target.checked) {
+                            card.checklist[itemId] = true;
+                        } else {
+                            delete card.checklist[itemId];
+                        }
+                        saveCached();
+                    }
+                });
+            });
+        }
+
+        // ============================================================================
+        // INCIDENT FEED (Victoria Emergency Management)
+        // ============================================================================
+        function normaliseIncident(f) {
+            // Support both ArcGIS format (attributes/geometry) and EMV format (direct properties)
+            const a = f.attributes || f; // EMV data is direct properties, ArcGIS uses attributes
+            const g = f.geometry || {};
+            
+            // Try multiple latitude/longitude field names
+            const lat = g.y ?? g.latitude ?? a.latitude ?? a.Latitude ?? null;
+            const lon = g.x ?? g.longitude ?? a.longitude ?? a.Longitude ?? null;
+
+            const updated = a.UPDATED
+                ? new Date(a.UPDATED).toISOString()
+                : a.lastUpdatedDtStr
+                ? new Date(a.lastUpdatedDtStr).toISOString()
+                : a.LastUpdatedAt
+                ? new Date(a.LastUpdatedAt).toISOString()
+                : null;
+            const started = a.STARTED
+                ? new Date(a.STARTED).toISOString()
+                : a.originDateTimeStr
+                ? new Date(a.originDateTimeStr).toISOString()
+                : a.INC_DATE_TIME
+                ? new Date(a.INC_DATE_TIME).toISOString()
+                : null;
+
+            return {
+                id:
+                    a.EMI_GUID ||
+                    a.INCIDENTNUM ||
+                    a.incidentNo ||
+                    a.INC_NUMBER ||
+                    a.INC_ID ||
+                    a.INC_KEY ||
+                    a.INCIDENTNAME ||
+                    a.NAME ||
+                    a.name ||
+                    Math.random().toString(16).slice(2),
+                name: a.INCIDENTNAME || a.NAME || a.name || "Unnamed incident",
+                status: a.STATUS || a.Status || a.incidentStatus || "Unknown",
+                type:
+                    a.TYPE ||
+                    a.Type ||
+                    a.category2 ||
+                    a.category1 ||
+                    a.incidentType ||
+                    "Unknown",
+                location: a.LOCATION || a.Location || a.incidentLocation || "",
+                agency: a.AGENCY || a.Agency || a.agency || "",
+                lat,
+                lon,
+                updatedISO: updated,
+                startedISO: started
+            };
+        }
+
+        function isFireType(incident, filter) {
+            if (filter === "all") return true;
+            const t = (incident.type || "").toLowerCase();
+            if (filter === "Fire") return t.includes("fire");
+            return t.includes(filter.toLowerCase());
+        }
+
+        function statusLevel(statusText) {
+            const s = (statusText || "").toLowerCase();
+            if (
+                s.includes("safe") ||
+                s.includes("closed") ||
+                s.includes("contained") ||
+                s.includes("patrol")
+            )
+                return "good";
+            if (
+                s.includes("controlled") ||
+                s.includes("being controlled") ||
+                s.includes("under control")
+            )
+                return "warn";
+            if (
+                s.includes("out of control") ||
+                s.includes("going") ||
+                s.includes("not controlled") ||
+                s.includes("spreading")
+            )
+                return "bad";
+            return "warn";
+        }
+
+        function statusTooltip(statusText) {
+            const s = (statusText || "").toLowerCase();
+            if (s.includes("emergency warning")) {
+                return "Emergency Warning: Immediate danger. Leave now or take shelter as advised.";
+            }
+            if (s.includes("watch") && s.includes("act")) {
+                return "Watch and Act: Conditions are changing. Prepare to leave and monitor updates.";
+            }
+            if (s.includes("advice")) {
+                return "Advice: Stay informed. No immediate action required but monitor updates.";
+            }
+            if (s.includes("not yet under control")) {
+                return "Not Yet Under Control: Active spread risk.";
+            }
+            if (s.includes("being controlled") || s.includes("under control")) {
+                return "Under Control: Containment is improving but remain alert.";
+            }
+            if (s.includes("contained")) {
+                return "Contained: Spread has been stopped, but hot spots may remain.";
+            }
+            return "See Incident Dictionary for definitions.";
+        }
+
+        function filterIncidentsByToday(incidents) {
+            if (!state.todayOnly) return incidents;
+            const today = new Date().toDateString();
+            return incidents.filter((inc) => {
+                const iso = inc.updatedISO || inc.startedISO;
+                if (!iso) return false;
+                const d = new Date(iso);
+                return d.toDateString() === today;
+            });
+        }
+
+        function buildArcGISQueryURL(lat, lon, radiusKm) {
+            const params = new URLSearchParams({
+                where: "1=1",
+                outFields: "*",
+                f: "json",
+                geometry: `${lon},${lat}`,
+                geometryType: "esriGeometryPoint",
+                inSR: "4326",
+                spatialRel: "esriSpatialRelIntersects",
+                distance: String(radiusKm),
+                units: "esriSRUnit_Kilometer"
+            });
+            return `${FEEDS.incidentsArcGISLayer0}?${params.toString()}`;
+        }
+
+        async function fetchIncidentsFromArcGIS(lat, lon, radiusKm) {
+            const url = buildArcGISQueryURL(lat, lon, radiusKm);
+            const res = await fetch(url, { headers: { Accept: "application/json" } });
+            if (!res.ok) throw new Error("ArcGIS incident feed failed");
+            const data = await res.json();
+            const incidents = data?.features || [];
+            return incidents
+                .map(normaliseIncident)
+                .filter((x) => x.lat != null && x.lon != null);
+        }
+
+        async function fetchIncidentsFromEMV(url) {
+            // Robust fetch: use local cache (2min), retries with backoff, and record source
+            const cacheKey = `JoshFireAwareness.emv.${url}`;
+            const now = Date.now();
+            try {
+                const raw = localStorage.getItem(cacheKey);
+                if (raw) {
+                    const obj = JSON.parse(raw);
+                    if (obj?.ts && now - new Date(obj.ts).getTime() < 2 * 60 * 1000) {
+                        setFeedSourceDisplay('cache');
+                        const items = Array.isArray(obj.body) ? obj.body : obj.body?.incidents || obj.body?.features || [];
+                        return (items || []).map(normaliseIncident).filter((x) => x.lat != null && x.lon != null);
+                    }
+                }
+            } catch (e) {
+                // ignore cache errors
+            }
+
+            const maxAttempts = 3;
+            let lastErr = null;
+            for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+                try {
+                    const res = await fetch(url, { headers: { Accept: 'application/json' } });
+                    if (!res.ok) throw new Error(`EMV fetch failed: ${res.status}`);
+                    const data = await res.json();
+                    // cache the raw response
+                    try {
+                        localStorage.setItem(cacheKey, JSON.stringify({ ts: new Date().toISOString(), body: data }));
+                    } catch (e) {}
+                    setFeedSourceDisplay(url === FEEDS.incidentsVicEmergencyProxy ? 'proxy' : 'emv');
+                    const items = Array.isArray(data) ? data : data?.incidents || data?.features || [];
+                    return (items || []).map(normaliseIncident).filter((x) => x.lat != null && x.lon != null);
+                } catch (err) {
+                    lastErr = err;
+                    console.warn(`EMV fetch attempt ${attempt} failed for ${url}:`, err);
+                    // exponential backoff
+                    await new Promise((r) => setTimeout(r, attempt * 500));
+                }
+            }
+            throw lastErr || new Error('EMV fetch failed');
+        }
+
+        async function fetchIncidentsNear(lat, lon, radiusKm) {
+            // Try serverless/local proxy first (if deployed or running locally)
+            const isLocalHost =
+                location.hostname === "localhost" || location.hostname === "127.0.0.1";
+            const tryUrls = [
+                FEEDS.incidentsVicEmergencyProxy,
+                isLocalHost ? FEEDS.incidentsVicEmergencyProxyLocal : "",
+                FEEDS.incidentsVicEmergency
+            ];
+            
+            let lastError = null;
+            for (const u of tryUrls) {
+                if (!u) continue;
+                try {
+                    const incidents = await fetchIncidentsFromEMV(u);
+                    // Filter by distance
+                    const filtered = incidents.filter((inc) => haversineKm(lat, lon, inc.lat, inc.lon) <= radiusKm);
+                    return filtered;
+                } catch (err) {
+                    console.warn(`EMV source failed (${u}):`, err);
+                    lastError = err;
+                    // try next
+                }
+            }
+
+            // Fall back to ArcGIS which has historically worked from the browser
+            try {
+                const results = await fetchIncidentsFromArcGIS(lat, lon, radiusKm);
+                if (results.length === 0 && lastError) {
+                    // No incidents found even after fallback - show warning
+                    showError(
+                        '⚠️ Incident data unavailable. Using cached data or no incidents nearby. Check VicEmergency.vic.gov.au directly.',
+                        () => render()
+                    );
+                }
+                return results;
+            } catch (error) {
+                console.error("All incident feed sources failed:", error);
+                showError(
+                    '❌ Cannot load incident data. Check your internet connection or visit VicEmergency.vic.gov.au directly.',
+                    () => render()
+                );
+                return [];
+            }
+        }
+        }
+
+        // ============================================================================
+        // ROUTING (OSRM)
+        // ============================================================================
+        async function fetchRoutes(origin, dest) {
+            const url = `${FEEDS.osrmRoute}/${origin.lon},${origin.lat};${dest.lon},${dest.lat}?overview=full&geometries=geojson&alternatives=true&steps=false`;
+            const res = await fetch(url, { headers: { Accept: "application/json" } });
+            if (!res.ok) throw new Error("Routing failed");
+            const data = await res.json();
+            if (data.code !== "Ok") throw new Error("Routing not OK");
+            return (data.routes || []).map((r, idx) => ({
+                idx,
+                distanceKm: r.distance / 1000,
+                durationMin: r.duration / 60,
+                geometry: r.geometry
+            }));
+        }
+
+        function scoreRouteAgainstIncidents(route, incidents, bufferKm) {
+            const line = turf.lineString(route.geometry.coordinates);
+            let near = [];
+            for (const inc of incidents) {
+                const pt = turf.point([inc.lon, inc.lat]);
+                const d = turf.pointToLineDistance(pt, line, { units: "kilometers" });
+                if (d <= bufferKm) {
+                    near.push({ ...inc, routeDistKm: d });
+                }
+            }
+            near.sort((a, b) => a.routeDistKm - b.routeDistKm);
+            return { count: near.length, near };
+        }
+
+        // ============================================================================
+        // MAP
+        // ============================================================================
+        const layers = {
+                homeMarker: null,
+                destMarker: null,
+                homeCircle: null,
+                destCircle: null,
+            incidentMarkers: [],
+            incidentCluster: null,
+                routeLine: null
+            };
+
+        function initMap() {
+            map = L.map("map", { zoomControl: true });
+            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                maxZoom: 19,
+                attribution: "(c) OpenStreetMap"
+            }).addTo(map);
+
+            // Add marker cluster group for incidents
+            if (window.L && L.markerClusterGroup) {
+                layers.incidentCluster = L.markerClusterGroup();
+                map.addLayer(layers.incidentCluster);
+            }
+
+            const start = state.home.lat
+                ? [state.home.lat, state.home.lon]
+                : [DEFAULTS.homeFallback.lat, DEFAULTS.homeFallback.lon];
+            map.setView(start, DEFAULTS.homeZoom);
+        }
+
+        function clearIncidentMarkers() {
+            if (!map) return;
+            if (layers.incidentCluster) {
+                try { layers.incidentCluster.clearLayers(); } catch (e) {}
+            }
+            for (const m of layers.incidentMarkers) {
+                try { map.removeLayer(m); } catch (e) {}
+            }
+            layers.incidentMarkers = [];
+        }
+
+        function setRouteLine(geojson) {
+            if (!map) return;
+            if (layers.routeLine) {
+                map.removeLayer(layers.routeLine);
+                layers.routeLine = null;
+            }
+            layers.routeLine = L.geoJSON(geojson, { style: { weight: 4, color: "#93c5fd" } }).addTo(map);
+        }
+
+        function setMarker(which, lat, lon, label) {
+            if (!map) return;
+            const pos = [lat, lon];
+            if (which === "home") {
+                if (layers.homeMarker) map.removeLayer(layers.homeMarker);
+                layers.homeMarker = L.marker(pos)
+                    .addTo(map)
+                    .bindPopup(`<b>Home</b><br>${escapeHtml(label)}`);
+                if (layers.homeCircle) map.removeLayer(layers.homeCircle);
+                layers.homeCircle = L.circle(pos, {
+                    radius: 50000,
+                    color: "#4ade80",
+                    weight: 1,
+                    opacity: 0.3,
+                    fillOpacity: 0.05
+                }).addTo(map);
+            } else {
+                if (layers.destMarker) map.removeLayer(layers.destMarker);
+                layers.destMarker = L.marker(pos)
+                    .addTo(map)
+                    .bindPopup(`<b>Destination</b><br>${escapeHtml(label)}`);
+                if (layers.destCircle) map.removeLayer(layers.destCircle);
+                layers.destCircle = L.circle(pos, {
+                    radius: 50000,
+                    color: "#93c5fd",
+                    weight: 1,
+                    opacity: 0.3,
+                    fillOpacity: 0.05
+                }).addTo(map);
+            }
+        }
+
+        function plotIncidents(baseLat, baseLon, incidents) {
+            if (!map) return incidents;
+            clearIncidentMarkers();
+            const filtered = incidents;
+            for (const inc of filtered) {
+                const d = haversineKm(baseLat, baseLon, inc.lat, inc.lon);
+                const b = bearingDeg(baseLat, baseLon, inc.lat, inc.lon);
+                const lvl = statusLevel(inc.status);
+                const color =
+                    lvl === "bad" ? "#fb7185" : lvl === "warn" ? "#fbbf24" : "#4ade80";
+                const icon = L.divIcon({
+                    html: `<div style="background:${color}; color:white; padding:4px 8px; border-radius:6px; font-size:11px; font-weight:bold;">${escapeHtml(
+                        inc.type || "Fire"
+                    )}</div>`,
+                    className: "",
+                    iconSize: [80, 18],
+                    iconAnchor: [40, 9]
+                });
+                const m = L.marker([inc.lat, inc.lon], { icon });
+                if (layers.incidentCluster && layers.incidentCluster.addLayer) {
+                    layers.incidentCluster.addLayer(m);
+                } else {
+                    m.addTo(map);
+                }
+                const vicEmLink = inc.id
+                    ? `https://emergency.vic.gov.au/respond/#/incident/${encodeURIComponent(inc.id)}`
+                    : "https://emergency.vic.gov.au/";
+                m.bindPopup(`
+          <b>${escapeHtml(inc.name)}</b><br>
+          <small>${escapeHtml(inc.type)} - <span title="${escapeHtml(
+              statusTooltip(inc.status)
+          )}">${escapeHtml(inc.status)}</span></small><br>
+          ${escapeHtml(inc.location)}<br>
+          <code>${km(d)} - ${compass(b)}</code><br>
+          <a href="${vicEmLink}" target="_blank">VicEmergency</a>
+        `);
+                layers.incidentMarkers.push(m);
+            }
+            if (filtered.length) {
+                try {
+                    const bounds = layers.incidentCluster && layers.incidentCluster.getBounds
+                        ? layers.incidentCluster.getBounds()
+                        : L.featureGroup(layers.incidentMarkers).getBounds();
+                    if (bounds && bounds.isValid && bounds.isValid()) {
+                        map.fitBounds(bounds.pad(0.25));
+                    } else if (bounds && bounds.getSouthWest) {
+                        map.fitBounds(bounds.pad(0.25));
+                    }
+                } catch (e) {
+                    // ignore fitBounds errors
+                }
+            }
+            return filtered;
+        }
+
+        // ============================================================================
+        // UI RENDERING
+        // ============================================================================
+        function renderCoords() {
+            $("homeCoords").textContent =
+                state.home.lat && state.home.lon
+                    ? `${fmt(state.home.lat, 4)}, ${fmt(state.home.lon, 4)}`
+                    : "--";
+            $("destCoords").textContent =
+                state.dest.lat && state.dest.lon
+                    ? `${fmt(state.dest.lat, 4)}, ${fmt(state.dest.lon, 4)}`
+                    : "--";
+        }
+
+        function renderIncList(baseLat, baseLon, incidents) {
+            const list = $("incList");
+            list.innerHTML = "";
+
+            const rows = incidents
+                .map((i) => {
+                    const d = haversineKm(baseLat, baseLon, i.lat, i.lon);
+                    const b = bearingDeg(baseLat, baseLon, i.lat, i.lon);
+                    return { ...i, distKm: d, bearing: b };
+                })
+                .sort((a, b) => a.distKm - b.distKm)
+                .slice(0, 30);
+
+            if (!rows.length) {
+                list.innerHTML = `<div class="small">No incidents returned. Use official links above.</div>`;
+                return;
+            }
+
+            for (const inc of rows) {
+                const lvl = statusLevel(inc.status);
+                const vicEmLink = inc.id
+                    ? `https://emergency.vic.gov.au/respond/#/incident/${encodeURIComponent(inc.id)}`
+                    : "https://emergency.vic.gov.au/";
+                const el = document.createElement("div");
+                el.className = "incident-item";
+                const tooltip = escapeHtml(statusTooltip(inc.status));
+                el.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:flex-start">
+            <div class="name">${escapeHtml(inc.name)}</div>
+            <span class="badge ${lvl}" title="${tooltip}">${escapeHtml(inc.status)}</span>
+          </div>
+          <div class="meta">
+            <div>${escapeHtml(inc.type)} - ${escapeHtml(inc.location || "")}</div>
+            <div class="mono">${km(inc.distKm)} - ${compass(inc.bearing)}</div>
+            <a href="${vicEmLink}" target="_blank">VicEmergency</a>
+          </div>
+        `;
+                list.appendChild(el);
+            }
+        }
+
+        function setRiskFromNearest(labelEl, whyEl, nearest) {
+            if (!nearest) {
+                labelEl.textContent = "?";
+                labelEl.className = "value warn";
+                whyEl.textContent = "No live data. Check VicEmergency.";
+                return;
+            }
+            const lvl = statusLevel(nearest.status);
+            if (nearest.distKm <= 30 && lvl === "bad") {
+                labelEl.textContent = "Higher";
+                labelEl.className = "value bad";
+                whyEl.textContent = `${nearest.name} ~${nearest.distKm.toFixed(1)} km away (${nearest.status}).`;
+                return;
+            }
+            if (nearest.distKm <= 50 && (lvl === "bad" || lvl === "warn")) {
+                labelEl.textContent = "Moderate";
+                labelEl.className = "value warn";
+                whyEl.textContent = `${nearest.name} ~${nearest.distKm.toFixed(1)} km away (${nearest.status}).`;
+                return;
+            }
+            labelEl.textContent = "Lower";
+            labelEl.className = "value good";
+            whyEl.textContent = nearest
+                ? `Nearest: ${nearest.name} ~${nearest.distKm.toFixed(1)} km (${nearest.status}).`
+                : "";
+        }
+
+        function rescoreRoutes() {
+            const homeList = filterIncidentsByToday(state.incidentsHome);
+            const destList = filterIncidentsByToday(state.incidentsDest);
+            const allForRoute = homeList.length ? homeList : destList;
+            state.incidentsRoute = [];
+
+            if (state.routes.length && allForRoute.length) {
+                const scored = state.routes
+                    .map((r) => {
+                        const s = scoreRouteAgainstIncidents(r, allForRoute, DEFAULTS.routeBufferKm);
+                        return { ...r, nearCount: s.count, near: s.near };
+                    })
+                    .sort((a, b) => a.nearCount - b.nearCount || a.durationMin - b.durationMin);
+
+                state.routes = scored;
+                state.chosenRouteIdx = 0;
+                state.incidentsRoute = scored[0].near.map((x) => ({
+                    ...x,
+                    distKm: x.routeDistKm
+                }));
+                setRouteLine(scored[0].geometry);
+            } else {
+                if (layers.routeLine) {
+                    map.removeLayer(layers.routeLine);
+                    layers.routeLine = null;
+                }
+            }
+        }
+
+        // ============================================================================
+        // MAIN FLOW
+        // ============================================================================
+        async function refreshAll() {
+            $("refreshBtn").disabled = true;
+            $("lastUpdate").textContent = "Updating...";
+
+            if (!state.home.lat || !state.home.lon) {
+                state.home = { ...state.home, ...DEFAULTS.homeFallback };
+            }
+            if (!state.dest.lat || !state.dest.lon) {
+                state.dest = { ...state.dest, ...DEFAULTS.destFallback };
+            }
+
+            const radiusKm = Number($("radiusKm").value || DEFAULTS.radiusKm);
+
+            setMarker("home", state.home.lat, state.home.lon, state.home.address || "Home");
+            setMarker("dest", state.dest.lat, state.dest.lon, state.dest.address || "Destination");
+
+            try {
+                state.incidentsHome = await fetchIncidentsNear(
+                    state.home.lat,
+                    state.home.lon,
+                    radiusKm
+                );
+            } catch (e) {
+                state.incidentsHome = [];
+                console.warn("Home incident feed failed:", e);
+            }
+
+            try {
+                state.incidentsDest = await fetchIncidentsNear(
+                    state.dest.lat,
+                    state.dest.lon,
+                    radiusKm
+                );
+            } catch (e) {
+                state.incidentsDest = [];
+                console.warn("Dest incident feed failed:", e);
+            }
+
+            try {
+                state.routes = await fetchRoutes(
+                    { lat: state.home.lat, lon: state.home.lon },
+                    { lat: state.dest.lat, lon: state.dest.lon }
+                );
+            } catch (e) {
+                state.routes = [];
+                console.warn("Routes failed:", e);
+            }
+
+            rescoreRoutes();
+
+            render();
+
+            $("lastUpdate").textContent = nowStr();
+            $("refreshBtn").disabled = false;
+            saveCached();
+            
+            // Record the time this refresh completed
+            recordRefreshTime();
+        }
+
+        function render() {
+            renderCoords();
+
+            let base = state.home,
+                list = state.incidentsHome;
+            if (state.mode === "dest") {
+                base = state.dest;
+                list = state.incidentsDest;
+            }
+            if (state.mode === "route") {
+                base = state.home;
+                list = state.incidentsRoute;
+            }
+
+            const filteredList =
+                state.mode === "route" ? list : filterIncidentsByToday(list);
+            renderIncList(base.lat, base.lon, filteredList);
+            plotIncidents(base.lat, base.lon, filteredList);
+
+            const nearestHome = nearestIncident(
+                state.home.lat,
+                state.home.lon,
+                filterIncidentsByToday(state.incidentsHome)
+            );
+            setRiskFromNearest($("homeRisk"), $("homeRiskWhy"), nearestHome);
+
+            const routeBest = state.routes?.[0];
+            if (!routeBest) {
+                $("routeRisk").textContent = "?";
+                $("routeRisk").className = "value warn";
+                $("routeRiskWhy").textContent = "Route data not loaded.";
+            } else {
+                if (routeBest.nearCount >= 6) {
+                    $("routeRisk").textContent = "Higher";
+                    $("routeRisk").className = "value bad";
+                } else if (routeBest.nearCount >= 2) {
+                    $("routeRisk").textContent = "Moderate";
+                    $("routeRisk").className = "value warn";
+                } else {
+                    $("routeRisk").textContent = "Lower";
+                    $("routeRisk").className = "value good";
+                }
+                $("routeRiskWhy").textContent = `${routeBest.distanceKm.toFixed(
+                    0
+                )} km, ~${routeBest.durationMin.toFixed(0)} min, ${routeBest.nearCount} incident(s) within ${DEFAULTS.routeBufferKm} km.`;
+            }
+        }
+
+        function nearestIncident(lat, lon, incidents) {
+            if (!incidents?.length) return null;
+            let best = null;
+            for (const i of incidents) {
+                const d = haversineKm(lat, lon, i.lat, i.lon);
+                const b = bearingDeg(lat, lon, i.lat, i.lon);
+                const cand = { ...i, distKm: d, bearing: b };
+                if (!best || cand.distKm < best.distKm) best = cand;
+            }
+            return best;
+        }
+
+        // ============================================================================
+        // WIRING
+        // ============================================================================
+        function wire() {
+            $("homeAddr").addEventListener("change", () => {
+                state.home.address = $("homeAddr").value;
+                updateGoogleRouteLink();
+                updateCheckin();
+            });
+            $("destAddr").addEventListener("change", () => {
+                state.dest.address = $("destAddr").value;
+                updateGoogleRouteLink();
+                updateCheckin();
+            });
+
+            $("homeGeocode").addEventListener("click", async () => {
+                $("homeGeocode").disabled = true;
+                try {
+                    const q = $("homeAddr").value.trim();
+                    state.home.address = q;
+                    const r = await geocodeAddress(q);
+                    state.home.lat = r.lat;
+                    state.home.lon = r.lon;
+                    renderCoords();
+                    setMarker("home", r.lat, r.lon, q);
+                    map.setView([r.lat, r.lon], DEFAULTS.homeZoom);
+                    updateGoogleRouteLink();
+                    updateCheckin();
+                    saveCached();
+                } catch (e) {
+                    alert("Could not geocode. Using Bendigo fallback.");
+                    state.home = { ...state.home, ...DEFAULTS.homeFallback };
+                    renderCoords();
+                    updateGoogleRouteLink();
+                    updateCheckin();
+                    saveCached();
+                } finally {
+                    $("homeGeocode").disabled = false;
+                }
+            });
+
+            $("destGeocode").addEventListener("click", async () => {
+                $("destGeocode").disabled = true;
+                try {
+                    const q = $("destAddr").value.trim();
+                    state.dest.address = q;
+                    const r = await geocodeAddress(q);
+                    state.dest.lat = r.lat;
+                    state.dest.lon = r.lon;
+                    renderCoords();
+                    setMarker("dest", r.lat, r.lon, q);
+                    updateGoogleRouteLink();
+                    updateCheckin();
+                    saveCached();
+                } catch (e) {
+                    alert("Could not geocode. Using Ballarat fallback.");
+                    state.dest = { ...state.dest, ...DEFAULTS.destFallback };
+                    renderCoords();
+                    updateGoogleRouteLink();
+                    updateCheckin();
+                    saveCached();
+                } finally {
+                    $("destGeocode").disabled = false;
+                }
+            });
+
+            $("homeHere").addEventListener("click", async () => {
+                $("homeHere").disabled = true;
+                try {
+                    const r = await useGPS();
+                    state.home.lat = r.lat;
+                    state.home.lon = r.lon;
+                    renderCoords();
+                    setMarker("home", r.lat, r.lon, "GPS location");
+                    map.setView([r.lat, r.lon], 12);
+                    updateGoogleRouteLink();
+                    updateCheckin();
+                    saveCached();
+                } catch (e) {
+                    alert("Could not access GPS.");
+                } finally {
+                    $("homeHere").disabled = false;
+                }
+            });
+
+            $("destHere").addEventListener("click", async () => {
+                $("destHere").disabled = true;
+                try {
+                    const r = await useGPS();
+                    state.dest.lat = r.lat;
+                    state.dest.lon = r.lon;
+                    renderCoords();
+                    setMarker("dest", r.lat, r.lon, "GPS location");
+                    updateGoogleRouteLink();
+                    updateCheckin();
+                    saveCached();
+                } catch (e) {
+                    alert("Could not access GPS.");
+                } finally {
+                    $("destHere").disabled = false;
+                }
+            });
+
+            $("refreshBtn").addEventListener("click", refreshAll);
+
+            $("clearBtn").addEventListener("click", () => {
+                clearCached();
+                alert("Cleared cached locations. Reload the page.");
+            });
+
+            $("radiusKm").addEventListener("change", () => {
+                saveCached();
+                refreshAll();
+            });
+
+            $("todayOnly").addEventListener("change", () => {
+                state.todayOnly = $("todayOnly").checked;
+                saveCached();
+                rescoreRoutes();
+                render();
+            });
+
+            $("windDir").addEventListener("change", () => {
+                state.wind.dir = $("windDir").value;
+                updateWindSummary();
+                saveCached();
+            });
+
+            $("windSpeed").addEventListener("input", () => {
+                state.wind.speed = $("windSpeed").value;
+                updateWindSummary();
+                saveCached();
+            });
+
+            $("checkinPhone").addEventListener("input", () => {
+                state.checkinPhone = $("checkinPhone").value;
+                updateCheckin();
+                saveCached();
+            });
+
+            $("checkinSend").addEventListener("click", () => {
+                const smsHref = $("checkinSend").getAttribute("data-sms") || "";
+                if (!smsHref) return;
+                window.location.href = smsHref;
+            });
+
+            $("addDayCard").addEventListener("click", () => {
+                openDayCardModal();
+            });
+
+            $("toggleHiddenCards").addEventListener("click", () => {
+                showHiddenDayCards = !showHiddenDayCards;
+                $("toggleHiddenCards").textContent = showHiddenDayCards ? "Hide hidden" : "Show hidden";
+                renderDayCards();
+            });
+
+            $("addKidsChecklist").addEventListener("click", () => {
+                const items = [
+                    "Water bottles (x2)",
+                    "Spare clothes & jumper",
+                    "Essential medication",
+                    "Snacks & drinks",
+                    "Comfort toy / blanket",
+                    "IDs & emergency contacts",
+                    "Face masks",
+                    "Phone + charger",
+                    "Plan: meeting point",
+                    "Vehicle: full tank"
+                ];
+                const card = {
+                    id: `kids-${Date.now()}`,
+                    title: "Kids Checklist - Sylvie & Elias",
+                    date: todayKey(),
+                    items,
+                    hidden: false,
+                    autoTitle: false
+                };
+                state.dayCards.unshift(card);
+                saveCached();
+                renderDayCards();
+                alert("Kids checklist added to Day Cards.");
+            });
+
+            $("dayCards").addEventListener("click", (event) => {
+                const target = event.target;
+                if (!(target instanceof HTMLElement)) return;
+                const action = target.getAttribute("data-action");
+                const id = target.getAttribute("data-id");
+                if (!action || !id) return;
+                const card = state.dayCards.find((c) => c.id === id);
+                if (!card) return;
+
+                if (action === "edit") {
+                    openDayCardModal(card);
+                    return;
+                }
+                if (action === "hide") {
+                    card.hidden = !card.hidden;
+                    saveCached();
+                    renderDayCards();
+                    return;
+                }
+                if (action === "delete") {
+                    const ok = confirm("Delete this day card?");
+                    if (!ok) return;
+                    state.dayCards = state.dayCards.filter((c) => c.id !== id);
+                    saveCached();
+                    renderDayCards();
+                }
+            });
+
+            // Evacuation Centres Search
+            $("searchEvacCentres").addEventListener("click", () => {
+                const query = $("evacuationSearch").value;
+                searchEvacuationCentres(query);
+            });
+
+            $("evacuationSearch").addEventListener("keypress", (e) => {
+                if (e.key === "Enter") {
+                    const query = $("evacuationSearch").value;
+                    searchEvacuationCentres(query);
+                }
+            });
+
+            // Error panel button listeners
+            $("errorRetryBtn").addEventListener("click", () => {
+                retryLastError();
+            });
+
+            $("errorDismissBtn").addEventListener("click", () => {
+                dismissError();
+            });
+
+            $("showHomeBtn").addEventListener("click", () => {
+                state.mode = "home";
+                updateModeButtons();
+                render();
+            });
+
+            $("showDestBtn").addEventListener("click", () => {
+                state.mode = "dest";
+                updateModeButtons();
+                render();
+            });
+
+            $("showRouteBtn").addEventListener("click", () => {
+                state.mode = "route";
+                updateModeButtons();
+                render();
+            });
+
+            const modal = $("levelModal");
+            const modalTitle = $("levelModalTitle");
+            const modalBody = $("levelModalBody");
+            let lastFocusedElement = null;
+            const modalFocusHandlers = new Map();
+
+            function openModal(el, focusEl) {
+                lastFocusedElement = document.activeElement;
+                el.classList.add("open");
+                const handler = (event) => {
+                    if (event.key !== "Tab") return;
+                    const focusables = el.querySelectorAll(
+                        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+                    );
+                    if (!focusables.length) return;
+                    const first = focusables[0];
+                    const last = focusables[focusables.length - 1];
+                    if (event.shiftKey && document.activeElement === first) {
+                        event.preventDefault();
+                        last.focus();
+                    } else if (!event.shiftKey && document.activeElement === last) {
+                        event.preventDefault();
+                        first.focus();
+                    }
+                };
+                el.addEventListener("keydown", handler);
+                modalFocusHandlers.set(el, handler);
+                setTimeout(() => {
+                    if (focusEl && typeof focusEl.focus === "function") {
+                        focusEl.focus();
+                    }
+                }, 0);
+            }
+
+            function closeModal(el) {
+                el.classList.remove("open");
+                const handler = modalFocusHandlers.get(el);
+                if (handler) {
+                    el.removeEventListener("keydown", handler);
+                    modalFocusHandlers.delete(el);
+                }
+                if (lastFocusedElement && typeof lastFocusedElement.focus === "function") {
+                    lastFocusedElement.focus();
+                }
+                lastFocusedElement = null;
+            }
+
+            function openLevelModal(title, body) {
+                modalTitle.textContent = title;
+                modalBody.textContent = body;
+                openModal(modal, $("closeLevelModal"));
+            }
+
+            function closeLevelModal() {
+                closeModal(modal);
+            }
+
+            $("explainEmergency").addEventListener("click", () => {
+                openLevelModal(
+                    "Emergency Warning",
+                    "You are in danger. Take action now. If you are in the path of the fire, leave immediately or seek shelter as advised by VicEmergency."
+                );
+            });
+
+            $("explainWatch").addEventListener("click", () => {
+                openLevelModal(
+                    "Watch and Act",
+                    "Conditions are changing. You should prepare to leave or enact your fire plan. Stay alert and monitor official updates closely."
+                );
+            });
+
+            $("explainAdvice").addEventListener("click", () => {
+                openLevelModal(
+                    "Advice",
+                    "An incident is happening but there is no immediate danger. Stay informed and be ready to act if the situation changes."
+                );
+            });
+
+            $("closeLevelModal").addEventListener("click", closeLevelModal);
+            modal.addEventListener("click", (event) => {
+                if (event.target === modal) {
+                    closeLevelModal();
+                }
+            });
+            // Incident Dictionary modal wiring
+            const dictModal = $("dictModal");
+            const dictModalTitle = $("dictModalTitle");
+            const dictModalBody = $("dictModalBody");
+
+            function openDictModal(title, html) {
+                dictModalTitle.textContent = title;
+                dictModalBody.innerHTML = html;
+                openModal(dictModal, $("closeDictModal"));
+            }
+
+            function closeDictModal() {
+                closeModal(dictModal);
+            }
+
+            $("openDictModal").addEventListener("click", async () => {
+                $("openDictModal").disabled = true;
+                try {
+                    const res = await fetch("docs/INCIDENT_DICTIONARY.md");
+                    const text = res.ok ? await res.text() : "Could not load definitions.";
+                    const safe = escapeHtml(text).replaceAll('\n', '<br>');
+                    openDictModal("Incident Dictionary", `<div class="mono" style="white-space:pre-wrap">${safe}</div>`);
+                } catch (e) {
+                    openDictModal("Incident Dictionary", "Could not load definitions.");
+                } finally {
+                    $("openDictModal").disabled = false;
+                }
+            });
+
+            $("closeDictModal").addEventListener("click", closeDictModal);
+
+            // Kids checklist modal view
+            $("openKidsChecklistModal").addEventListener("click", () => {
+                const list = Array.from(document.querySelectorAll('#kidsChecklistItems li')).map(li => li.textContent.trim());
+                const html = '<ul class="small">' + list.map(i=>`<li>${escapeHtml(i)}</li>`).join('') + '</ul>';
+                openDictModal('Kids Checklist', html);
+            });
+            dictModal.addEventListener("click", (event) => {
+                if (event.target === dictModal) closeDictModal();
+            });
+            document.addEventListener("keydown", (event) => {
+                if (event.key === "Escape") {
+                    closeDictModal();
+                }
+            });
+            document.addEventListener("keydown", (event) => {
+                if (event.key === "Escape") {
+                    closeLevelModal();
+                    if (dayCardModal.classList.contains("open")) {
+                        closeDayCardModal();
+                    }
+                }
+            });
+
+            const dayCardModal = $("dayCardModal");
+            const dayCardTitle = $("dayCardTitle");
+            const dayCardDate = $("dayCardDate");
+            const dayCardItems = $("dayCardItems");
+            let activeDayCardId = null;
+
+            function closeDayCardModal() {
+                closeModal(dayCardModal);
+                activeDayCardId = null;
+            }
+
+            function openDayCardModal(card = null) {
+                activeDayCardId = card?.id || null;
+                if (card?.autoTitle) {
+                    dayCardTitle.value = relativeTitleForDate(card.date);
+                } else {
+                    dayCardTitle.value = card?.title || "";
+                }
+                dayCardDate.value = card?.date || todayKey();
+                dayCardItems.value = Array.isArray(card?.items) ? card.items.join("\n") : "";
+                openModal(dayCardModal, dayCardTitle);
+            }
+
+            $("cancelDayCard").addEventListener("click", closeDayCardModal);
+            dayCardModal.addEventListener("click", (event) => {
+                if (event.target === dayCardModal) {
+                    closeDayCardModal();
+                }
+            });
+
+            $("saveDayCard").addEventListener("click", () => {
+                const title = dayCardTitle.value.trim() || "Day Card";
+                const date = dayCardDate.value || todayKey();
+                const items = dayCardItems.value
+                    .split("\n")
+                    .map((line) => line.trim())
+                    .filter(Boolean);
+
+                if (activeDayCardId) {
+                    const card = state.dayCards.find((c) => c.id === activeDayCardId);
+                    if (card) {
+                        card.title = title;
+                        card.date = date;
+                        card.items = items;
+                        if (card.autoTitle) {
+                            card.autoTitle = title === relativeTitleForDate(date);
+                        }
+                    }
+                } else {
+                    state.dayCards.push({
+                        id: `day-${Math.random().toString(16).slice(2)}`,
+                        title,
+                        date,
+                        items,
+                        hidden: false,
+                        autoTitle: false
+                    });
+                }
+                saveCached();
+                renderDayCards();
+                closeDayCardModal();
+            });
+        }
+
+        function updateModeButtons() {
+            $("showHomeBtn").classList.toggle("primary", state.mode === "home");
+            $("showDestBtn").classList.toggle("primary", state.mode === "dest");
+            $("showRouteBtn").classList.toggle("primary", state.mode === "route");
+        }
+
+        // ============================================================================
+        // BOOT
+        // ============================================================================
+        (function boot() {
+            if ("serviceWorker" in navigator && location.protocol !== "file:") {
+                navigator.serviceWorker.register("/service-worker.js").catch(() => {});
+            }
+            loadCached();
+            state.home.address = $("homeAddr").value;
+            state.dest.address = $("destAddr").value;
+
+            if (state.home.address) $("homeAddr").value = state.home.address;
+            if (state.dest.address) $("destAddr").value = state.dest.address;
+            $("todayOnly").checked = state.todayOnly;
+            updateGoogleRouteLink();
+
+            if (!state.dayCards.length) {
+                state.dayCards = defaultDayCards();
+                saveCached();
+            }
+            ensureTodayCard();
+            renderDayCards();
+            updateWindSummary();
+            updateCheckin();
+            updateOfflineBanner();
+            window.addEventListener("online", updateOfflineBanner);
+            window.addEventListener("offline", updateOfflineBanner);
+
+            // Initialize map FIRST before setting markers
+            initMap();
+
+            if (state.home.lat && state.home.lon)
+                setMarker("home", state.home.lat, state.home.lon, state.home.address);
+            if (state.dest.lat && state.dest.lon)
+                setMarker("dest", state.dest.lat, state.dest.lon, state.dest.address);
+
+            wire();
+            updateModeButtons();
+
+            (async () => {
+                try {
+                    if (!state.home.lat || !state.home.lon) {
+                        const r = await geocodeAddress($("homeAddr").value);
+                        state.home.lat = r.lat;
+                        state.home.lon = r.lon;
+                        state.home.address = $("homeAddr").value;
+                    }
+                } catch (e) {
+                    state.home = { ...state.home, ...DEFAULTS.homeFallback };
+                }
+                try {
+                    if (!state.dest.lat || !state.dest.lon) {
+                        const r = await geocodeAddress($("destAddr").value);
+                        state.dest.lat = r.lat;
+                        state.dest.lon = r.lon;
+                        state.dest.address = $("destAddr").value;
+                    }
+                } catch (e) {
+                    state.dest = { ...state.dest, ...DEFAULTS.destFallback };
+                }
+
+                renderCoords();
+                setMarker("home", state.home.lat, state.home.lon, state.home.address);
+                setMarker("dest", state.dest.lat, state.dest.lon, state.dest.address);
+
+                // Load refresh time from localStorage and then fetch
+                loadLastRefreshTime();
+                await refreshAll();
+            })();
+
+            // Auto refresh every 5 minutes
+            setInterval(() => refreshAll().catch(() => {}), 5 * 60 * 1000);
+
+            // Update countdown timer
+            updateCountdown();
+            setInterval(updateCountdown, 60 * 1000); // Update every 60 seconds
+
+            // Update data age display every 60 seconds
+            setInterval(updateDataAgeDisplay, 60 * 1000);
+        })();
+
+        // Countdown Timer to Safe Departure (8:00am Saturday Jan 10)
+        function updateCountdown() {
+            const countdownEl = $('countdown-display');
+            if (!countdownEl) return;
+            
+            const now = new Date();
+            const targetTime = new Date(2026, 0, 10, 8, 0, 0); // Jan 10, 2026, 8:00am
+            const diffMs = targetTime.getTime() - now.getTime();
+            
+            if (diffMs <= 0) {
+                // Departure time has passed
+                countdownEl.textContent = 'Departure time reached!';
+                countdownEl.className = 'passed';
+                return;
+            }
+            
+            // Calculate hours and minutes remaining
+            const totalMinutes = Math.floor(diffMs / (1000 * 60));
+            const hours = Math.floor(totalMinutes / 60);
+            const minutes = totalMinutes % 60;
+            
+            const timeStr = `${hours}h ${minutes}m`;
+            countdownEl.textContent = `Time until safe departure (8:00am Sat): ${timeStr}`;
+            
+            // Change color if less than 2 hours remaining
+            if (hours < 2) {
+                countdownEl.className = 'warn';
+            } else {
+                countdownEl.className = '';
+            }
+        }
+
+        // Refresh Control: Track last refresh time and data age
+        function loadLastRefreshTime() {
+            try {
+                const stored = localStorage.getItem('JoshFireAwareness.lastRefresh');
+                if (stored) {
+                    lastRefreshTime = new Date(stored);
+                    updateDataAgeDisplay();
+                }
+            } catch (e) {}
+        }
+
+        function updateDataAgeDisplay() {
+            const timeEl = $('last-check-time');
+            const badgeEl = $('data-age');
+            
+            if (!lastRefreshTime) {
+                timeEl.textContent = 'Never';
+                badgeEl.textContent = 'Not loaded';
+                badgeEl.className = 'data-age-badge fresh';
+                return;
+            }
+            
+            const now = new Date();
+            const diffMs = now.getTime() - lastRefreshTime.getTime();
+            const diffMins = Math.floor(diffMs / (1000 * 60));
+            
+            // Update time display
+            if (diffMins === 0) {
+                timeEl.textContent = 'Just now';
+            } else if (diffMins < 60) {
+                timeEl.textContent = `${diffMins}m ago`;
+            } else {
+                const hours = Math.floor(diffMins / 60);
+                timeEl.textContent = `${hours}h ago`;
+            }
+            
+            // Update badge color based on freshness
+            badgeEl.className = 'data-age-badge';
+            if (diffMins < 10) {
+                badgeEl.textContent = 'Fresh';
+                badgeEl.classList.add('fresh');
+            } else if (diffMins < 30) {
+                badgeEl.textContent = 'Stale';
+                badgeEl.classList.add('stale');
+            } else {
+                badgeEl.textContent = 'Old';
+                badgeEl.classList.add('old');
+            }
+        }
+
+        function setFeedSourceDisplay(src) {
+            lastFeedSource = src;
+            try {
+                const el = $('feed-source');
+                if (el) el.textContent = src || '-';
+            } catch (e) {}
+        }
+
+        function recordRefreshTime() {
+            lastRefreshTime = new Date();
+            try {
+                localStorage.setItem('JoshFireAwareness.lastRefresh', lastRefreshTime.toISOString());
+            } catch (e) {}
+            updateDataAgeDisplay();
+        }
+
+        async function manualRefresh() {
+            const btn = $('refresh-data');
+            if (isRefreshDisabled) return;
+            
+            // Disable button for 10 seconds
+            isRefreshDisabled = true;
+            btn.disabled = true;
+            btn.textContent = 'Checking...';
+            
+            try {
+                await refreshAll();
+            } catch (e) {
+                console.warn('Manual refresh failed:', e);
+            }
+            
+            // Re-enable button after 10 seconds
+            setTimeout(() => {
+                isRefreshDisabled = false;
+                btn.disabled = false;
+                btn.textContent = 'Check Latest Info';
+            }, 10 * 1000);
+        }
+
+        // Evacuation Centres Search
+        async function searchEvacuationCentres(query) {
+            const resultsEl = $('evacuationResults');
+            if (!resultsEl) return;
+
+            if (!query.trim()) {
+                resultsEl.innerHTML = '<div class="small">Enter location and click Search.</div>';
+                return;
+            }
+
+            resultsEl.innerHTML = '<div class="small">Searching...</div>';
+
+            try {
+                // Use Nominatim to geocode the query
+                const nominatimUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query + ', Victoria, Australia')}&format=json&limit=1`;
+                const geocodeRes = await fetch(nominatimUrl, { headers: { 'Accept-Language': 'en' } });
+                if (!geocodeRes.ok) throw new Error('Geocoding failed');
+                const geoData = await geocodeRes.json();
+
+                if (!geoData.length) {
+                    resultsEl.innerHTML = '<div class="small" style="color: var(--muted);">Location not found. Try a suburb name or full address.</div>';
+                    return;
+                }
+
+                const { lat, lon } = geoData[0];
+
+                // Query VicEmergency for evacuation centres near this location
+                // Using a static list as official API requires registration
+                // In production, integrate with VicEmergency API or local government DB
+                const centres = [
+                    {
+                        name: 'Bendigo Exhibition Centre',
+                        address: '18-26 Mulhall Street, Bendigo VIC 3550',
+                        type: 'Major Centre',
+                        distance: null
+                    },
+                    {
+                        name: 'Ballarat Civic Hall',
+                        address: '27 Doveton Street, Ballarat VIC 3350',
+                        type: 'Major Centre',
+                        distance: null
+                    },
+                    {
+                        name: 'Castlemaine Town Hall',
+                        address: 'Market Street, Castlemaine VIC 3450',
+                        type: 'Community Centre',
+                        distance: null
+                    },
+                    {
+                        name: 'Kyneton Mechanics Institute',
+                        address: 'Piper Street, Kyneton VIC 3444',
+                        type: 'Community Centre',
+                        distance: null
+                    },
+                    {
+                        name: 'Creswick Community Centre',
+                        address: 'Lydiard Street North, Creswick VIC 3363',
+                        type: 'Community Centre',
+                        distance: null
+                    }
+                ];
+
+                // Calculate distances
+                for (const centre of centres) {
+                    const d = haversineKm(lat, lon, -37.3, 144.27); // Default to Bendigo for now; in production, geocode each centre
+                    centre.distance = d;
+                }
+
+                // Sort by distance
+                centres.sort((a, b) => (a.distance || 999) - (b.distance || 999));
+
+                if (!centres.length) {
+                    resultsEl.innerHTML = '<div class="small" style="color: var(--muted);">No evacuation centres found in database.</div>';
+                    return;
+                }
+
+                // Render results
+                const html = centres
+                    .map((c) => {
+                        const dist = c.distance ? `(${c.distance.toFixed(1)} km away)` : '';
+                        return `<div class="small" style="padding: 8px; border-bottom: 1px solid var(--border-color);">
+                            <strong>${escapeHtml(c.name)}</strong> - ${c.type}<br>
+                            ${escapeHtml(c.address)}<br>
+                            <span style="color: var(--muted);">📍 ${dist}</span>
+                        </div>`;
+                    })
+                    .join('');
+                resultsEl.innerHTML = html;
+            } catch (err) {
+                console.error('Evacuation centre search error:', err);
+                resultsEl.innerHTML = `<div class="small" style="color: var(--bad);">Search failed. Try a different location.</div>`;
+            }
+        }
+
+        // Service worker registration and online/offline indicator
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js').then((reg) => {
+                    console.log('ServiceWorker registered', reg);
+                }).catch((err) => {
+                    console.warn('ServiceWorker registration failed', err);
+                });
+            });
+        }
+
+        // Error handling and display
+        let lastError = null;
+        let lastErrorRetryFn = null;
+
+        function showError(message, retryFn = null) {
+            const panel = $('errorPanel');
+            const msgEl = panel?.querySelector('.error-message');
+            const retryBtn = $('errorRetryBtn');
+            const dismissBtn = $('errorDismissBtn');
+            
+            if (!panel || !msgEl) return;
+
+            lastError = message;
+            lastErrorRetryFn = retryFn;
+
+            msgEl.textContent = message;
+            if (retryBtn) retryBtn.style.display = retryFn ? 'block' : 'none';
+
+            panel.style.display = 'block';
+
+            // Auto-dismiss after 8 seconds if no retry
+            if (!retryFn) {
+                setTimeout(() => {
+                    panel.style.display = 'none';
+                }, 8000);
+            }
+        }
+
+        function dismissError() {
+            const panel = $('errorPanel');
+            if (panel) panel.style.display = 'none';
+        }
+
+        function retryLastError() {
+            if (lastErrorRetryFn) {
+                dismissError();
+                lastErrorRetryFn();
+            }
+        }
+
+        function updateOnlineStatus() {
+            const el = $('offline-indicator');
+            if (!el) return;
+            if (navigator.onLine) {
+                el.textContent = 'Online';
+                el.style.color = 'var(--good)';
+            } else {
+                el.textContent = 'Offline';
+                el.style.color = 'var(--bad)';
+            }
+        }
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        updateOnlineStatus();
+    </script>
+</body>
+</html>
