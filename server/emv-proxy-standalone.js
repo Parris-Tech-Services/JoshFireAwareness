@@ -7,6 +7,7 @@ const https = require('https');
 const url = require('url');
 
 const PORT = process.env.PORT || 3000;
+const HOST = process.env.HOST || '127.0.0.1';
 const TARGET = 'https://data.emergency.vic.gov.au/Show?pageId=getIncidentJSON';
 
 function proxyHandler(req, res) {
@@ -40,6 +41,6 @@ function proxyHandler(req, res) {
 }
 
 const server = http.createServer(proxyHandler);
-server.listen(PORT, () => {
-  console.log(`EMV proxy listening on http://localhost:${PORT}/api/emv`);
+server.listen(PORT, HOST, () => {
+  console.log(`EMV proxy listening on http://${HOST}:${PORT}/api/emv`);
 });
