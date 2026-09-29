@@ -64,3 +64,9 @@ For live data, deploy the included Netlify/Vercel function (`netlify/functions/e
 Keep as a **portfolio/demo** project clearly labelled as a prototype. If you want a live
 fire-awareness tool for your current NSW location, build on the **NSW RFS "Hazards Near Me"**
 data rather than the Victorian EMV feed — and retain the disclaimers above.
+
+## Engineering standard
+
+Engineering principles: v5.1  
+Assurance tier: 2  
+Canonical repository: https://github.com/Parris-Tech-Services/JoshFireAwareness
