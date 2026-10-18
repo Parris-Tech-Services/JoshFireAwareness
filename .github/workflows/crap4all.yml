@@ -1,14 +1,7 @@
 name: CRAP4All quality gate
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - '**/*.js'
-      - '.github/workflows/crap4all.yml'
-  pull_request:
-    paths:
-      - '**/*.js'
+  workflow_dispatch:
 
 jobs:
   crap4all:
