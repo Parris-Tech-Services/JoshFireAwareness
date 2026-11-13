@@ -70,3 +70,7 @@ data rather than the Victorian EMV feed — and retain the disclaimers above.
 Engineering principles: v5.1  
 Assurance tier: 2  
 Canonical repository: https://github.com/Parris-Tech-Services/JoshFireAwareness
+
+## NSW / Orana learning companion (2026)
+
+The separately hosted **[Orana Fieldnotes](https://orana-fieldnotes.vercel.app/)** is a new public independent NSW RFS volunteer **learning and resource reference** for Dubbo, Burrabadine and Orana. Its source is in [`orana/`](orana/). It is not an official RFS app and **does not serve or replicate live safety alerts**. The historical Victorian fire-awareness prototype in this repository remains unchanged.
