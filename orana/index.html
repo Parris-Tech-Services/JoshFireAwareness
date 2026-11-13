@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#f3eee5">
+  <meta name="description" content="An independent, practical NSW Rural Fire Service learning companion for volunteers around Dubbo, Burrabadine and Orana. Research-backed pathways, local context and official resources.">
+  <title>Orana Fieldnotes — Your RFS learning companion</title>
+  <style>
+    :root{--paper:#f3eee5;--paper2:#fcfaf5;--ink:#243139;--muted:#5e6a68;--red:#a33329;--red2:#db7553;--gold:#e8bd75;--green:#42665a;--line:#dcd5c9;--serif:Georgia,'Times New Roman',serif;--sans:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth;scroll-padding-top:98px}
+    body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased}
+    button,input{font:inherit}
+    a{color:inherit}
+    a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid #c75c32;outline-offset:4px}
+    ::selection{background:#dfb58c;color:#292521}
+    .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+    .skip{position:absolute;top:-90px;left:18px;background:#fff;padding:12px 16px;z-index:99}.skip:focus{top:12px}
+    .wrap{max-width:1200px;margin:0 auto;padding:0 28px}
+    .topline{background:#263b38;color:#f6f2e8;font-size:.72rem;letter-spacing:.13em;text-transform:uppercase;text-align:center;padding:9px 16px}
+    .topline strong{color:#edc887;font-weight:700}
+    header{position:sticky;top:0;z-index:30;background:rgba(243,238,229,.96);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+    .head{display:flex;align-items:center;min-height:81px;gap:20px}
+    .brand{display:flex;align-items:center;gap:12px;text-decoration:none;min-width:200px}
+    .brandmark{height:44px;width:44px;border-radius:12px;background:var(--red);color:#fff;display:grid;place-items:center;box-shadow:inset 0 -5px 0 rgba(0,0,0,.1);font-family:var(--serif);font-size:1.1rem;font-weight:bold;letter-spacing:-.04em}
+    .brandtext{font-family:var(--serif);font-size:1.36rem;line-height:1}.brandtext small{display:block;font:700 .55rem var(--sans);color:var(--muted);letter-spacing:.2em;margin-top:8px}
+    nav{display:flex;gap:23px;margin-left:auto;align-items:center}nav a{text-decoration:none;font-weight:650;color:#374b4a;font-size:.89rem}nav a:hover{color:var(--red)}
+    .button{display:inline-flex;align-items:center;justify-content:center;gap:9px;padding:12px 18px;border:1px solid transparent;border-radius:9px;min-height:46px;text-decoration:none;font-weight:750;font-size:.86rem;cursor:pointer;transition:transform .16s ease,background .16s ease,box-shadow .16s ease}
+    .button:hover{transform:translateY(-2px)}
+    .button-primary{background:var(--red);color:white;box-shadow:0 8px 20px rgba(112,43,36,.16)}.button-primary:hover{background:#812a24}
+    .button-ghost{border-color:var(--line);background:var(--paper2);color:var(--ink)}.button-ghost:hover{border-color:#9d8274}
+    .button-dark{background:#243a38;color:#fff}.button-dark:hover{background:#152824}
+    .nav-action{margin-left:10px}.menu-toggle{display:none}
+    .eyebrow{font-size:.69rem;letter-spacing:.2em;text-transform:uppercase;color:var(--red);font-weight:850;display:flex;align-items:center;gap:10px}.eyebrow:before{content:'';display:block;width:27px;height:2px;background:currentColor}
+    .hero{padding:74px 0 52px;overflow:hidden}
+    .hero-grid{display:grid;grid-template-columns:.95fr 1.05fr;gap:55px;align-items:center}
+    h1,h2,h3,p{margin-top:0}h1,h2,.serif{font-family:var(--serif);font-weight:500}
+    h1{font-size:clamp(3.7rem,6.7vw,6.65rem);letter-spacing:-.065em;line-height:.99;margin:25px 0}
+    h1 em{color:var(--red);font-style:italic}
+    .lead{font-size:1.08rem;max-width:530px;color:#51605f;line-height:1.78}
+    .hero-buttons{display:flex;flex-wrap:wrap;gap:10px;margin:27px 0 29px}
+    .micro{font-size:.79rem;color:#65706f;line-height:1.6}.micro strong{color:#3f514c}
+    .hero-art{position:relative;min-height:490px;border-radius:22px;overflow:hidden;background:#a34032;box-shadow:0 25px 75px rgba(68,49,36,.2)}
+    .hero-art svg{display:block;width:100%;height:100%;position:absolute;inset:0}
+    .art-label{position:absolute;left:25px;bottom:26px;color:#fff;letter-spacing:.16em;font-size:.65rem;font-weight:850;text-transform:uppercase;z-index:2}
+    .art-small{position:absolute;right:24px;top:23px;color:#fff;font-size:.75rem;background:rgba(27,44,40,.3);backdrop-filter:blur(7px);border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:8px 13px}
+    .vert{position:absolute;top:25%;right:0;writing-mode:vertical-rl;color:#ffddae;font-size:.63rem;letter-spacing:.2em;opacity:.86}
+    .notice{display:flex;gap:17px;align-items:flex-start;background:#e5e7da;border:1px solid #cad3c5;border-radius:12px;padding:18px 22px;color:#334a45;font-size:.88rem}
+    .notice strong{display:block;color:#273c37}.notice svg{flex:0 0 22px;margin-top:3px}
+    .section{padding:83px 0}.section.alt{background:var(--paper2);border-top:1px solid #ece5da;border-bottom:1px solid #ece5da}
+    .section-head{display:flex;justify-content:space-between;align-items:flex-end;gap:30px;margin-bottom:34px}
+    h2{font-size:clamp(2.35rem,4.4vw,4.15rem);letter-spacing:-.055em;line-height:1.1;margin:16px 0 0}
+    .section-intro{max-width:420px;margin:0;color:var(--muted);font-size:.96rem;line-height:1.7}
+    h3{font-family:var(--serif);font-size:1.53rem;font-weight:500;letter-spacing:-.025em;line-height:1.2}
+    .quick{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+    .quick a{background:#263b38;color:#f9f3e6;border-radius:13px;padding:25px 25px 23px;text-decoration:none;min-height:170px;position:relative;transition:transform .2s;display:flex;flex-direction:column}
+    .quick a:hover{transform:translateY(-4px)}.quick a:nth-child(2){background:#994638}.quick a:nth-child(3){background:#565b46}
+    .quick .icon{font-size:1.5rem;margin-bottom:14px}.quick .num{font-family:var(--serif);font-size:1.42rem;line-height:1.1}.quick .sub{color:#e2e7dc;font-size:.82rem;margin-top:8px}.quick .arr{position:absolute;right:22px;top:24px;font-size:1.3rem}
+    .light-card{background:#fffdfa;border:1px solid var(--line);border-radius:15px;padding:26px}
+    .pathway{display:grid;grid-template-columns:repeat(4,1fr);gap:13px}
+    .path{background:#fffdf8;border:1px solid var(--line);padding:24px 21px 22px;border-radius:13px;position:relative;min-height:280px}
+    .path .n{display:inline-flex;align-items:center;justify-content:center;background:#f0dfcd;border:1px solid #e9cfb5;color:#9e3d2c;width:39px;height:39px;border-radius:50%;font-family:var(--serif);font-size:1.2rem;margin-bottom:21px}
+    .path h3{font-size:1.36rem;margin-bottom:9px}.path p{font-size:.83rem;color:var(--muted);line-height:1.67}
+    .tag{display:inline-flex;padding:4px 9px;background:#e7efea;color:#426353;border-radius:999px;font-size:.65rem;letter-spacing:.06em;text-transform:uppercase;font-weight:850}
+    .tag.check{background:#faebd2;color:#8d4c21}.tag.critical{background:#f4dedb;color:#922e2c}
+    .path .tag{position:absolute;bottom:19px;left:21px}
+    .caution{margin-top:16px;border-left:4px solid var(--red);background:#f6e8df;padding:17px 21px;font-size:.88rem;color:#4e4036;border-radius:0 9px 9px 0}
+    .cols{display:grid;grid-template-columns:.95fr 1.05fr;gap:26px}
+    .checkpanel{background:#203b36;color:#f6f4e8;border-radius:17px;padding:30px;position:relative;overflow:hidden}
+    .checkpanel h3{font-size:2rem}.checkpanel p{color:#cad4c7;font-size:.86rem}
+    .checkline{display:flex;align-items:flex-start;gap:12px;padding:13px 0;border-bottom:1px solid rgba(255,255,255,.13);font-size:.86rem;cursor:pointer}
+    .checkline input{accent-color:#ebb87f;width:18px;height:18px;flex:0 0 18px;margin-top:3px}
+    .checkline:last-child{border-bottom:0}
+    .progress-track{height:7px;background:#51635b;border-radius:999px;overflow:hidden;margin:19px 0 8px}.progress-fill{width:0;height:100%;background:#e9b577;transition:width .3s}
+    .progress-text{font-size:.79rem;font-weight:700;color:#efc793!important}
+    .check-actions{margin-top:20px;display:flex;gap:10px;flex-wrap:wrap}
+    .smallbtn{border:1px solid rgba(255,255,255,.4);background:transparent;color:inherit;padding:8px 12px;border-radius:7px;cursor:pointer;font-size:.78rem;font-weight:700}
+    .smallbtn:hover{background:rgba(255,255,255,.12)}
+    .questions{background:#f4ede2;border:1px solid var(--line);border-radius:17px;padding:30px}
+    .questions h3{font-size:2rem}.questions ol{padding-left:20px;color:#445653;line-height:1.5}.questions li{padding:10px 0;border-bottom:1px solid #e4d9cc;font-size:.89rem}.questions li:last-child{border:0}
+    .mapband{padding:0;background:#273c39;color:#f7f1e6;overflow:hidden}
+    .mapgrid{display:grid;grid-template-columns:.85fr 1.15fr;align-items:stretch}
+    .mapcopy{padding:66px 0 58px}.mapcopy .eyebrow{color:#eab37b}.mapcopy h2{max-width:500px}
+    .mapcopy p{color:#d0d8cf;max-width:460px;line-height:1.8;margin:20px 0 30px}
+    .metricrow{display:flex;gap:28px;flex-wrap:wrap}.metric{border-top:1px solid rgba(255,255,255,.28);padding-top:15px;min-width:104px}.metric strong{font:normal 2.2rem var(--serif);display:block;color:#f3c58a}.metric span{font-size:.77rem;color:#cbd6cb;display:block;max-width:110px}
+    .terrain{position:relative;overflow:hidden;min-height:430px;background:linear-gradient(153deg,#b56b4d,#dcab7b 52%,#dbc095 70%,#72896e)}.terrain:before{content:'';position:absolute;inset:0;background:repeating-radial-gradient(ellipse at 80% 46%,transparent 0 26px,rgba(53,68,50,.23) 27px 28px,transparent 29px 43px);transform:rotate(-12deg) scale(1.3);mix-blend-mode:multiply}.terrain:after{content:'';position:absolute;inset:auto 0 0 0;height:160px;background:linear-gradient(0deg,rgba(36,61,51,.82),transparent)}.terrain .place{position:absolute;color:#fdf4e8;z-index:2;font-weight:800;font-size:.91rem;text-shadow:0 1px 8px #5b543b}.terrain .place small{display:block;font-weight:400;letter-spacing:.11em;text-transform:uppercase;font-size:.63rem}.place.dubbo{top:48%;left:51%}.place.narromine{top:68%;left:26%}.place.wellington{top:30%;left:72%}.place:before{content:'';display:inline-block;width:9px;height:9px;background:#fff;border:3px solid #a84f3c;border-radius:50%;margin-right:6px;box-shadow:0 0 0 6px rgba(255,255,255,.15)}.terrain .caption{position:absolute;bottom:20px;left:24px;z-index:2;font-size:.72rem;letter-spacing:.06em;color:#e7e5d4}
+    .systems{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.system{background:#fffdf8;border:1px solid var(--line);padding:26px;border-radius:14px;display:flex;flex-direction:column}.system .glyph{height:48px;width:48px;border-radius:12px;display:grid;place-items:center;background:#f0ded4;color:#903c2c;font-size:1.5rem;margin-bottom:22px}.system h3{font-size:1.54rem;margin-bottom:8px}.system p{color:var(--muted);font-size:.88rem;flex:1}.system a{font-size:.84rem;font-weight:800;color:var(--red);text-decoration:none}.system a:hover{text-decoration:underline}
+    .principles{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}.principle{background:#fffdfa;padding:26px;border-radius:12px;border:1px solid var(--line)}.principle b{display:block;font-size:.74rem;letter-spacing:.13em;text-transform:uppercase;color:var(--red);margin-bottom:12px}.principle h3{font-size:1.45rem}.principle p{font-size:.87rem;color:var(--muted);margin:0}
+    .resource-head{display:flex;justify-content:space-between;gap:18px;align-items:end;flex-wrap:wrap}.searchbar{display:flex;align-items:center;gap:12px;border:1px solid #cfc5b6;background:#fffdfa;border-radius:10px;padding:0 15px;min-height:50px;width:min(100%,390px)}.searchbar svg{flex-shrink:0}.searchbar input{border:0;outline:0;background:transparent;color:var(--ink);width:100%;font-size:.9rem}
+    .filters{display:flex;gap:8px;flex-wrap:wrap;margin:20px 0}.filter{border:1px solid #d7cabc;color:#4a5b57;border-radius:999px;padding:9px 16px;background:transparent;font-size:.77rem;cursor:pointer;font-weight:800}.filter[aria-pressed=true],.filter:hover{background:#2c4741;color:white;border-color:#2c4741}
+    .resources{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.resource{display:flex;align-items:center;gap:16px;background:#fffdfa;border:1px solid var(--line);border-radius:11px;padding:18px 20px;text-decoration:none;transition:background .15s,border-color .15s}.resource:hover{border-color:#aa6f56;background:#fff6ed}.resource .ri{display:grid;place-items:center;font-size:1.18rem;background:#efeadf;border-radius:9px;width:42px;height:42px;flex:none}.resource h3{font:750 .92rem var(--sans);letter-spacing:0;margin:0 0 3px}.resource p{font-size:.75rem;margin:0;color:var(--muted)}.resource .go{margin-left:auto;color:var(--red);font-size:1.35rem}.resource[hidden]{display:none}
+    #no-results{background:#fffdfa;border:1px dashed #cfc5b6;border-radius:12px;padding:18px;display:none}
+    .quiz-wrap{display:grid;grid-template-columns:1fr 1fr;gap:44px;align-items:center}.quiz-copy p{color:var(--muted);max-width:430px}.quiz-card{border:1px solid #dfd1bf;background:#fffdf7;padding:34px;border-radius:17px;box-shadow:0 17px 35px rgba(61,53,43,.06);min-height:405px}
+    .quiz-index{font-size:.74rem;letter-spacing:.1em;font-weight:850;text-transform:uppercase;color:var(--red);margin-bottom:14px}
+    .quiz-card h3{font-size:1.7rem;line-height:1.32;margin:0 0 26px}.answers{display:grid;gap:10px}.answer{display:flex;gap:10px;align-items:flex-start;border:1px solid #dfd8cc;border-radius:9px;padding:12px 13px;cursor:pointer;font-size:.86rem;line-height:1.5}.answer:hover{background:#f6efe3}.answer input{margin-top:4px;accent-color:var(--red);flex:0 0 15px}
+    .answer.correct{background:#e9f0e5;border-color:#86a485}.answer.incorrect{background:#f9e5dd;border-color:#c27d65}
+    .quiz-footer{display:flex;align-items:center;gap:10px;margin-top:20px}.quiz-feedback{font-size:.84rem;font-weight:720;color:#40594d;margin-top:14px}.quiz-feedback a{color:var(--red)}
+    .footer{padding:48px 0;background:#243832;color:#e8eadf}.footgrid{display:flex;gap:24px;align-items:start;justify-content:space-between;flex-wrap:wrap}.footer h3{color:#f8f0db}.footer p,.footer a{color:#cbd8cd;font-size:.85rem}.footer a:hover{color:white}.footer-links{display:flex;gap:20px;flex-wrap:wrap}.fine{font-size:.74rem!important;color:#b4c6b6!important;max-width:580px}
+    @media(max-width:1000px){nav{gap:13px}.nav-action{display:none}.hero-grid{gap:30px}.hero-art{min-height:430px}.pathway{grid-template-columns:repeat(2,1fr)}.systems{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:760px){.wrap{padding:0 19px}.topline{font-size:.58rem}.head{min-height:70px;flex-wrap:wrap}.brand{min-width:auto}.brandtext{font-size:1.2rem}.menu-toggle{margin-left:auto;display:inline-flex;min-height:40px;padding:8px 11px;background:transparent;border:1px solid #cbbfb0;border-radius:8px;color:var(--ink);font-weight:750}.head nav{display:none;width:100%;margin:0;padding:0 0 15px;flex-wrap:wrap;gap:0}.head nav.open{display:flex}.head nav a{width:50%;padding:12px 6px}.hero{padding:48px 0 31px}.hero-grid,.cols,.mapgrid,.quiz-wrap{grid-template-columns:1fr}.hero-grid{gap:24px}.hero-art{min-height:350px}.hero-art .art-label{bottom:15px}.hero h1{font-size:clamp(3.4rem,13vw,5rem)}.section{padding:58px 0}.section-head{display:block}.section-intro{margin-top:16px}.quick{grid-template-columns:1fr}.quick a{min-height:115px;padding:17px 23px}.quick .icon{margin-bottom:3px}.quick .num{font-size:1.25rem}.pathway{gap:12px}.path{padding:20px;min-height:256px}.path .tag{bottom:13px}.path .n{margin-bottom:14px}.mapcopy{padding:55px 0 43px}.terrain{min-height:285px;margin:0 -19px}.systems,.principles,.resources{grid-template-columns:1fr}.quiz-card{padding:23px;min-height:0}.resource-head{display:block}.searchbar{margin-top:21px;width:100%}.footer-links{gap:13px}.quiz-wrap{gap:15px}}
+    @media(max-width:410px){.pathway{grid-template-columns:1fr}.path{min-height:210px}.path .tag{position:static;margin-top:12px}.checkpanel,.questions{padding:22px}.hero-art{min-height:285px}.art-small{display:none}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+  </style>
+</head>
+<body>
+  <a href="#main" class="skip">Skip to content</a>
+  <div class="topline"><strong>ORANA / NSW</strong> &nbsp;·&nbsp; INDEPENDENT VOLUNTEER LEARNING REFERENCE &nbsp;·&nbsp; RESEARCHED 13 NOV 2026</div>
+  <header>
+    <div class="wrap head">
+      <a href="#main" class="brand" aria-label="Orana Fieldnotes home">
+        <span class="brandmark" aria-hidden="true">OF</span>
+        <span class="brandtext">Orana Fieldnotes<small>LEARN · PREPARE · BELONG</small></span>
+      </a>
+      <button class="menu-toggle" id="menu-toggle" aria-controls="site-nav" aria-expanded="false">☰ &nbsp;Menu</button>
+      <nav id="site-nav" aria-label="Main navigation">
+        <a href="#start">Start here</a><a href="#training">Training</a><a href="#orana">Our area</a><a href="#systems">Systems</a><a href="#resources">Resources</a><a href="#quiz">Quiz</a>
+      </nav>
+      <a class="button button-dark nav-action" href="https://github.com/joshualparris/ResearchLibrary/tree/main/rfs" target="_blank" rel="noopener noreferrer" title="Requires access to the private GitHub repository">Private notebook ↗</a>
+    </div>
+  </header>
+  <main id="main">
+    <section id="start" class="hero">
+      <div class="wrap hero-grid">
+        <div>
+          <div class="eyebrow">A place to begin</div>
+          <h1>Find your<br><em>feet in the</em><br>fire service.</h1>
+          <p class="lead">A thoughtful field guide to getting started with the NSW Rural Fire Service around <strong>Dubbo, Burrabadine and Orana</strong>. Understand the pathway, meet the systems, and learn your local landscape — one step at a time.</p>
+          <div class="hero-buttons">
+            <a class="button button-primary" href="#training">Explore my training <span aria-hidden="true">↗</span></a>
+            <a class="button button-ghost" href="#resources">Open resources <span aria-hidden="true">↗</span></a>
+          </div>
+          <p class="micro"><strong>Independent resource.</strong> Not created, approved or operated by NSW RFS. All incident decisions and operational requirements must follow current official directions.</p>
+        </div>
+        <div class="hero-art">
+          <span class="art-small">33° South · Orana NSW</span>
+          <svg viewBox="0 0 620 490" preserveAspectRatio="xMidYMid slice" aria-label="Stylised Orana hills and grasslands at sunset" role="img">
+            <defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#8b2f2b"/><stop offset=".4" stop-color="#ba694c"/><stop offset=".78" stop-color="#e1a66e"/><stop offset="1" stop-color="#e4bf88"/></linearGradient><radialGradient id="glow" cx="73%" cy="48%" r="36%"><stop stop-color="#f8dc9d" stop-opacity=".8"/><stop offset="1" stop-color="#f7d5a4" stop-opacity="0"/></radialGradient></defs>
+            <rect width="620" height="490" fill="url(#sky)"/><rect width="620" height="490" fill="url(#glow)"/>
+            <g fill="none" stroke="#f5cb95" opacity=".32" stroke-width="1"><path d="M-40 45Q170-4 368 39T680 31"/><path d="M-50 68Q174 16 379 59T690 58"/><path d="M-20 103Q170 54 361 90T680 101"/><path d="M0 134Q175 100 395 137T660 144"/><path d="M-20 167Q163 129 375 160T640 178"/></g>
+            <circle cx="441" cy="204" r="65" fill="#fae0ac" opacity=".86"/>
+            <path d="M0 258 Q98 234 170 260 Q275 288 365 250 Q486 214 620 270 L620 490H0Z" fill="#b27a59"/>
+            <path d="M0 316 Q130 278 256 312 Q396 350 620 288 L620 490H0Z" fill="#94735b"/>
+            <path d="M0 371 Q120 315 238 349 Q384 389 620 320 L620 490H0Z" fill="#586e5c"/>
+            <path d="M0 416 Q180 359 325 398 Q456 431 620 382 L620 490H0Z" fill="#30493d"/>
+            <g stroke="#d1bd82" stroke-width="2" stroke-linecap="round" opacity=".65">
+              <path d="M36 493q-7-54-26-74m26 74q21-45 37-56"/><path d="M80 492q3-62 19-83m-19 83q-22-38-40-48"/><path d="M159 494q10-66 30-95m-30 95q-22-48-41-64"/><path d="M282 492q4-53 20-74m-20 74q-25-57-48-65"/><path d="M367 495q13-65 38-89m-38 89q-13-47-31-63"/><path d="M493 494q7-80 37-112m-37 112q-30-56-54-67"/><path d="M581 494q9-65 29-81m-29 81q-23-41-44-51"/>
+            </g>
+            <g opacity=".7" fill="none" stroke="#fce0b5"><path d="M60 279Q200 265 317 273Q440 284 563 261" stroke-dasharray="3 8"/><path d="M88 306Q208 284 313 302Q455 337 560 312" stroke-dasharray="3 10"/></g>
+            <g fill="#f8dfb7"><circle cx="202" cy="292" r="4"/><circle cx="467" cy="303" r="4"/></g>
+          </svg>
+          <span class="art-label">The country we care for — Central Western NSW</span><span class="vert">FIELD NOTES / 001</span>
+        </div>
+      </div>
+    </section>
+    <section class="wrap" style="padding-bottom:66px">
+      <div class="notice" role="note">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#3f6354" stroke-width="2" aria-hidden="true"><path d="M12 2 3 6v6c0 5.2 3.4 8.8 9 10 5.6-1.2 9-4.8 9-10V6l-9-4Z"/><path d="m8 12 3 3 5-6"/></svg>
+        <div><strong>Learn here. Confirm locally. Act on official advice.</strong> This is a personal learning companion, not emergency warning software, an official curriculum or proof of qualifications. If there's a fire emergency, call <strong>000</strong>. For live incidents and fire danger, always use the official NSW RFS website.</div>
+      </div>
+    </section>
+    <section class="section alt" aria-labelledby="now-heading">
+      <div class="wrap">
+        <div class="section-head"><div><div class="eyebrow">01 / Stay informed</div><h2 id="now-heading">The official<br><em>starting points.</em></h2></div><p class="section-intro">Conditions change quickly. These links go directly to the current authoritative information rather than displaying an outdated snapshot.</p></div>
+        <div class="quick">
+          <a href="https://www.rfs.nsw.gov.au/" target="_blank" rel="noopener noreferrer"><span class="arr" aria-hidden="true">↗</span><span class="icon" aria-hidden="true">◎</span><span class="num">Fires Near Me</span><span class="sub">Active incidents and official RFS updates</span></a>
+          <a href="https://www.rfs.nsw.gov.au/fire-information/fire-danger-ratings-and-total-fire-bans" target="_blank" rel="noopener noreferrer"><span class="arr" aria-hidden="true">↗</span><span class="icon" aria-hidden="true">◒</span><span class="num">Fire danger & bans</span><span class="sub">Check Lower Central West Plains</span></a>
+          <a href="https://www.rfs.nsw.gov.au/fire-information/bush-fire-danger-period" target="_blank" rel="noopener noreferrer"><span class="arr" aria-hidden="true">↗</span><span class="icon" aria-hidden="true">◈</span><span class="num">Fire permits</span><span class="sub">Current rules for Dubbo and Narromine</span></a>
+        </div>
+      </div>
+    </section>
+    <section class="section" id="training" aria-labelledby="training-heading">
+      <div class="wrap">
+        <div class="section-head"><div><div class="eyebrow">02 / Your learning</div><h2 id="training-heading">From induction<br>to <em>capability.</em></h2></div><p class="section-intro">An orientation map based on the October 2026 Orana welcome information and the NSW RFS training framework. Your actual course order, records and authorisation must come from RFS.</p></div>
+        <div class="pathway">
+          <article class="path"><span class="n">01</span><h3>Get oriented</h3><p>Member Induction (MI19) introduces the service, its culture, structure and expectations. Ask your trainer to confirm completion in the system.</p><span class="tag">Foundation</span></article>
+          <article class="path"><span class="n">02</span><h3>Set the standard</h3><p>Check Respectful & Inclusive Workplace training and the current Code of Conduct acknowledgement. These matter before brigade participation.</p><span class="tag check">Confirm requirements</span></article>
+          <article class="path"><span class="n">03</span><h3>Prepare to learn</h3><p>Check your Unique Student Identifier (USI) is securely recorded, and find your assigned course materials in FUEL.</p><span class="tag">Training admin</span></article>
+          <article class="path"><span class="n">04</span><h3>Build fire skills</h3><p>Ask Orana about Bush Fire or Grassland (BF/BFG) and the current F1/F2 theory and practical pathway. Competency and local authorisation come first.</p><span class="tag critical">Not incident clearance</span></article>
+        </div>
+        <div class="caution"><strong>Important:</strong> The 23 October 2026 welcome letter says BF or BFG is required before attending incidents; it also discusses F1/F2. Ask your training officer how these qualifications relate locally. Induction or probationary membership alone does <strong>not</strong> clear you to respond.</div>
+        <div class="cols" style="margin-top:24px">
+          <div class="checkpanel">
+            <div class="eyebrow" style="color:#e9bd85">My own checklist</div>
+            <h3>Small steps,<br>steady progress.</h3>
+            <p>Tick as personal reminders. These stay <strong style="color:#fff">only in this browser</strong> and are not synced to RFS or recognised as official qualifications.</p>
+            <div id="checks">
+              <label class="checkline"><input type="checkbox" data-task="meeting"><span>Introduce myself and find a brigade training contact</span></label>
+              <label class="checkline"><input type="checkbox" data-task="induction"><span>Ask whether my induction is formally recorded</span></label>
+              <label class="checkline"><input type="checkbox" data-task="riw"><span>Check RIW and Code of Conduct acknowledgements</span></label>
+              <label class="checkline"><input type="checkbox" data-task="usi"><span>Check USI in the secure member profile</span></label>
+              <label class="checkline"><input type="checkbox" data-task="fuel"><span>Check my access to FUEL and OneRFS</span></label>
+              <label class="checkline"><input type="checkbox" data-task="path"><span>Confirm the BF/BFG and F1/F2 pathway</span></label>
+              <label class="checkline"><input type="checkbox" data-task="dates"><span>Find next local theory and practical course dates</span></label>
+              <label class="checkline"><input type="checkbox" data-task="support"><span>Agree a sustainable volunteering routine</span></label>
+            </div>
+            <div class="progress-track" aria-hidden="true"><div class="progress-fill" id="progress-fill"></div></div>
+            <p class="progress-text" id="progress-text" aria-live="polite">0 of 8 steps marked</p>
+            <div class="check-actions"><button id="copy-questions" class="smallbtn" type="button">Copy meeting questions</button><button id="reset-checks" class="smallbtn" type="button">Clear ticks</button></div>
+            <p id="copy-status" class="micro" role="status" style="margin:12px 0 0"></p>
+          </div>
+          <div class="questions">
+            <div class="eyebrow">To ask at the brigade</div>
+            <h3>Good questions<br>make a good start.</h3>
+            <ol id="meeting-questions">
+              <li>Is my Member Induction officially recorded as complete?</li>
+              <li>Are RIW and the Code of Conduct acknowledgement required now?</li>
+              <li>What are BF/BFG versus F1/F2, and what is my actual training order?</li>
+              <li>When are the next local theory and practical sessions?</li>
+              <li>Who confirms what activities I can safely participate in?</li>
+              <li>Which app, pager and contact arrangements does our brigade use?</li>
+              <li>What non-operational or community roles would be useful?</li>
+              <li>Who can mentor me as I learn?</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section id="orana" class="mapband" aria-labelledby="orana-heading">
+      <div class="wrap mapgrid">
+        <div class="mapcopy">
+          <div class="eyebrow">03 / Know your place</div>
+          <h2 id="orana-heading">Our country.<br>Our <em>community.</em></h2>
+          <p>Orana's bushfire management area spans Dubbo Regional and Narromine Shire. A landscape of grasslands, woodland, farms and communities shapes the local fire context — including harvest and machinery-related hazards.</p>
+          <div class="metricrow">
+            <div class="metric"><strong>61%</strong><span>Grassland (approx.)</span></div>
+            <div class="metric"><strong>37%</strong><span>Bushland (approx.)</span></div>
+            <div class="metric"><strong>1.28m</strong><span>Hectares in Orana BFMC (approx.)</span></div>
+          </div>
+          <p class="micro" style="margin-top:23px;color:#cbd8cd">Source: <a href="https://www.rfs.nsw.gov.au/plan-and-prepare/managing-bush-fire-risk/bush-fire-management-committees/orana" target="_blank" rel="noopener noreferrer">NSW RFS Orana Bush Fire Risk Management Committee ↗</a>. Statistics are planning context, not a live incident map.</p>
+          <a class="button button-ghost" href="https://www.rfs.nsw.gov.au/about-us/our-districts/orana" target="_blank" rel="noopener noreferrer">Explore Orana district ↗</a>
+        </div>
+        <div class="terrain" role="img" aria-label="Decorative abstract landscape with Dubbo, Narromine and Wellington place labels. Not a navigational map.">
+          <span class="place dubbo">Dubbo<small>Regional centre</small></span><span class="place narromine">Narromine<small>Western plains</small></span><span class="place wellington">Wellington<small>Dubbo Regional LGA</small></span>
+          <span class="caption">ILLUSTRATIVE LANDSCAPE — NOT A MAP OR ROUTE</span>
+        </div>
+      </div>
+    </section>
+    <section class="section alt" aria-labelledby="principles-heading">
+      <div class="wrap">
+        <div class="section-head"><div><div class="eyebrow">04 / Safe preparation</div><h2 id="principles-heading">A few things<br>worth <em>knowing.</em></h2></div><p class="section-intro">Public safety principles and contextual information, not an operational field manual.</p></div>
+        <div class="principles">
+          <article class="principle"><b>Emergency</b><h3>Fire emergency? Call 000.</h3><p>For current incident information, use NSW RFS Fires Near Me or call the Bush Fire Information Line on <a href="tel:1800679737">1800 679 737</a>. <a href="https://www.rfs.nsw.gov.au/fire-information/emergency-information" target="_blank" rel="noopener noreferrer">Official emergency guidance ↗</a></p></article>
+          <article class="principle"><b>Season and permits</b><h3>Dates can change locally.</h3><p>The statutory Bush Fire Danger Period is normally 1 October–31 March, but declarations can vary it. Check current local permits and Total Fire Bans before any burning. <a href="https://www.rfs.nsw.gov.au/fire-information/bush-fire-danger-period" target="_blank" rel="noopener noreferrer">Check RFS permits ↗</a></p></article>
+          <article class="principle"><b>Grass and harvest</b><h3>Think about the farm landscape.</h3><p>Grassfires, machinery, harvest conditions, wind and ignition prevention are especially relevant to Orana's rural environment. <a href="https://www.rfs.nsw.gov.au/plan-and-prepare/farm-fire-safety/grain-harvesting-guide" target="_blank" rel="noopener noreferrer">Harvest fires guide ↗</a></p></article>
+          <article class="principle"><b>People first</b><h3>Wellbeing is part of service.</h3><p>The RFS offers peer support, chaplaincy, psychologists and a Member Assistance Program for volunteers, with eligible family support. <a href="https://www.rfs.nsw.gov.au/volunteer/support-for-rfs-members-and-their-families" target="_blank" rel="noopener noreferrer">Member support ↗</a></p></article>
+        </div>
+      </div>
+    </section>
+    <section id="systems" class="section" aria-labelledby="systems-heading">
+      <div class="wrap">
+        <div class="section-head"><div><div class="eyebrow">05 / Member tools</div><h2 id="systems-heading">Know where<br>to <em>go next.</em></h2></div><p class="section-intro">The systems mentioned in NSW RFS member information. Some require your secure sign-in; links are provided for convenience, not bypassing permissions.</p></div>
+        <div class="systems">
+          <article class="system"><span class="glyph" aria-hidden="true">⌂</span><h3>OneRFS</h3><p>Member news, profile and resources. Ask your district for current access guidance.</p><a href="https://one.rfs.nsw.gov.au/" target="_blank" rel="noopener noreferrer">Open member portal ↗</a></article>
+          <article class="system"><span class="glyph" aria-hidden="true">▤</span><h3>FUEL</h3><p>NSW RFS online learning platform. Complete assigned online induction and theory using your member account.</p><a href="https://fuel.rfs.nsw.gov.au/" target="_blank" rel="noopener noreferrer">Open FUEL ↗</a></article>
+          <article class="system"><span class="glyph" aria-hidden="true">◇</span><h3>Member sign-in</h3><p>RFS identity and single-sign-on application dashboard. Keep account and verification details private.</p><a href="https://identity.rfs.nsw.gov.au/app/UserHome" target="_blank" rel="noopener noreferrer">Open RFS identity ↗</a></article>
+          <article class="system"><span class="glyph" aria-hidden="true">◉</span><h3>RFS ACTIV</h3><p>Availability and response app described in older district onboarding materials. Ask your brigade how it is used today.</p><a href="https://www.rfs.nsw.gov.au/about-us/our-districts/orana/contact-us" target="_blank" rel="noopener noreferrer">Ask Orana FCC ↗</a></article>
+          <article class="system"><span class="glyph" aria-hidden="true">▧</span><h3>FireMapper</h3><p>In-field mapping; read the official 2025 doctrine. Access and use are governed by member roles and RFS directions.</p><a href="https://www.rfs.nsw.gov.au/resources/publications/doctrine/technical/firemapper" target="_blank" rel="noopener noreferrer">Read official guidance ↗</a></article>
+          <article class="system"><span class="glyph" aria-hidden="true">✧</span><h3>Student identifier</h3><p>The free Australian Government USI is needed for nationally recognised qualifications. Store it in the authorised member system, not this website.</p><a href="https://www.usi.gov.au/" target="_blank" rel="noopener noreferrer">Official USI website ↗</a></article>
+        </div>
+      </div>
+    </section>
+    <section id="resources" class="section alt" aria-labelledby="resources-heading">
+      <div class="wrap">
+        <div class="resource-head"><div><div class="eyebrow">06 / Your bookshelf</div><h2 id="resources-heading">Useful, reliable<br><em>places to learn.</em></h2></div><label class="searchbar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5c6d68" stroke-width="2" aria-hidden="true"><circle cx="10.8" cy="10.8" r="7.1"/><path d="m16 16 5 5"/></svg><span class="sr-only">Search resources</span><input id="search" type="search" placeholder="Search resources…" autocomplete="off"></label></div>
+        <div class="filters" role="group" aria-label="Resource category filters"><button class="filter" data-filter="all" aria-pressed="true">All</button><button class="filter" data-filter="training" aria-pressed="false">Learning</button><button class="filter" data-filter="local" aria-pressed="false">Orana</button><button class="filter" data-filter="safety" aria-pressed="false">Safety</button><button class="filter" data-filter="support" aria-pressed="false">Support</button></div>
+        <div class="resources" id="resources-list">
+          <a class="resource" data-kind="safety" href="https://www.rfs.nsw.gov.au/" target="_blank" rel="noopener noreferrer"><span class="ri">◎</span><div><h3>NSW RFS Fires Near Me</h3><p>Official live incidents and warnings</p></div><span class="go">↗</span></a>
+          <a class="resource" data-kind="safety" href="https://www.rfs.nsw.gov.au/fire-information/fire-danger-ratings-and-total-fire-bans" target="_blank" rel="noopener noreferrer"><span class="ri">◒</span><div><h3>Fire danger ratings & bans</h3><p>Check Lower Central West Plains</p></div><span class="go">↗</span></a>
+          <a class="resource" data-kind="safety" href="https://www.rfs.nsw.gov.au/fire-information/bush-fire-danger-period" target="_blank" rel="noopener noreferrer"><span class="ri">◉</span><div><h3>Bush Fire Danger Period & permits</h3><p>Current restrictions and local requirements</p></div><span class="go">↗</span></a>
+          <a class="resource" data-kind="training" href="https://www.rfs.nsw.gov.au/volunteer/training" target="_blank" rel="noopener noreferrer"><span class="ri">▤</span><div><h3>Volunteer training overview</h3><p>Foundation to Strategic training bands</p></div><span class="go">↗</span></a>
+          <a class="resource" data-kind="training" href="https://www.rfs.nsw.gov.au/__data/assets/pdf_file/0013/71401/Training-Information-Booklet.pdf" target="_blank" rel="noopener noreferrer"><span class="ri">☷</span><div><h3>RFS Training Information Booklet</h3><p>Official v4.1 (2023): confirm updated requirements</p></div><span class="go">↗</span></a>
+          <a class="resource" data-kind="local" href="https://www.rfs.nsw.gov.au/plan-and-prepare/managing-bush-fire-risk/bush-fire-management-committees/orana" target="_blank" rel="noopener noreferrer"><span class="ri">⌁</span><div><h3>Orana bushfire risk plan</h3><p>Land use, community assets and risk treatment</p></div><span class="go">↗</span></a>
+          <a class="resource" data-kind="local" href="https://www.rfs.nsw.gov.au/about-us/our-districts/orana/brigade-contact-details" target="_blank" rel="noopener noreferrer"><span class="ri">⌂</span><div><h3>Orana brigade directory</h3><p>Burrabadine, Dubbo, Terramungamine and more</p></div><span class="go">↗</span></a>
+          <a class="resource" data-kind="local" href="https://www.rfs.nsw.gov.au/about-us/our-districts/orana/contact-us" target="_blank" rel="noopener noreferrer"><span class="ri">☏</span><div><h3>Orana Fire Control Centre</h3><p>Dubbo district contact details</p></div><span class="go">↗</span></a>
+          <a class="resource" data-kind="safety" href="https://www.rfs.nsw.gov.au/plan-and-prepare/farm-fire-safety/grain-harvesting-guide" target="_blank" rel="noopener noreferrer"><span class="ri">≋</span><div><h3>Farm & grain harvesting safety</h3><p>Harvest safety alerts and risk prevention</p></div><span class="go">↗</span></a>
+          <a class="resource" data-kind="training" href="https://www.rfs.nsw.gov.au/resources/publications/doctrine/technical/firemapper" target="_blank" rel="noopener noreferrer"><span class="ri">▧</span><div><h3>FireMapper doctrine</h3><p>Official operational guideline, May 2025</p></div><span class="go">↗</span></a>
+          <a class="resource" data-kind="support" href="https://www.rfs.nsw.gov.au/volunteer/support-for-rfs-members-and-their-families" target="_blank" rel="noopener noreferrer"><span class="ri">♡</span><div><h3>Volunteer & family wellbeing</h3><p>Peer support, chaplaincy and member assistance</p></div><span class="go">↗</span></a>
+          <a class="resource" data-kind="support" href="https://www.rfs.nsw.gov.au/volunteer/join-the-rfs" target="_blank" rel="noopener noreferrer"><span class="ri">✳</span><div><h3>Volunteer roles & joining</h3><p>How people contribute and what to expect</p></div><span class="go">↗</span></a>
+          <a class="resource" data-kind="training" href="https://www.usi.gov.au/" target="_blank" rel="noopener noreferrer"><span class="ri">◇</span><div><h3>USI student identifier</h3><p>Free Australian Government qualification identifier</p></div><span class="go">↗</span></a>
+          <a class="resource" data-kind="safety" href="https://www.rfs.nsw.gov.au/fire-information/emergency-information" target="_blank" rel="noopener noreferrer"><span class="ri">!</span><div><h3>Emergency contacts & advice</h3><p>000, official information line and accessibility</p></div><span class="go">↗</span></a>
+          <a class="resource" data-kind="training" href="https://www.rfs.nsw.gov.au/about-us/rfs-glossary" target="_blank" rel="noopener noreferrer"><span class="ri">Aa</span><div><h3>NSW RFS glossary</h3><p>Understand words, terms and acronyms</p></div><span class="go">↗</span></a>
+        </div>
+        <p id="no-results" role="status">No matching resources. Try another word or category.</p>
+        <p class="micro" style="margin-top:19px">Most references are from NSW RFS. Booklets and older publications may be superseded; check the linked official page for the current version.</p>
+      </div>
+    </section>
+    <section id="quiz" class="section" aria-labelledby="quiz-heading">
+      <div class="wrap quiz-wrap">
+        <div class="quiz-copy">
+          <div class="eyebrow">07 / Check your understanding</div>
+          <h2 id="quiz-heading">Learn a little.<br><em>Remember more.</em></h2>
+          <p>Ten gentle questions about the service, your learning pathway and local fire awareness. Feedback and links are included. This is a personal knowledge check, not RFS assessment or accreditation.</p>
+          <a class="button button-ghost" href="https://www.rfs.nsw.gov.au/volunteer/training" target="_blank" rel="noopener noreferrer">Official training information ↗</a>
+          <p class="micro" style="margin-top:24px">No scores are sent anywhere. Only your checklist is remembered locally on your device.</p>
+        </div>
+        <div class="quiz-card" id="quiz-card">
+          <p class="quiz-index" id="quiz-counter">Question 1 of 10</p>
+          <h3 id="quiz-prompt">Loading your first question…</h3>
+          <div class="answers" id="quiz-answers"></div>
+          <p class="quiz-feedback" id="quiz-feedback" role="status" aria-live="polite"></p>
+          <div class="quiz-footer"><button class="button button-primary" id="quiz-next" type="button" disabled>Next question ↗</button><button class="button button-ghost" id="quiz-restart" type="button" hidden>Start again</button></div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer class="footer">
+    <div class="wrap footgrid">
+      <div><h3>Orana Fieldnotes</h3><p>Learn · Prepare · Belong</p><p class="fine">An independent volunteer study companion. Not an NSW Rural Fire Service product, endorsed service, incident alert platform, training certificate or replacement for official instruction. No official insignia is used. Research checked 13 November 2026; current directions and sources take priority.</p></div>
+      <div><div class="footer-links"><a href="https://www.rfs.nsw.gov.au/" target="_blank" rel="noopener noreferrer">NSW RFS ↗</a><a href="https://github.com/Parris-Tech-Services/JoshFireAwareness/tree/main/orana" target="_blank" rel="noopener noreferrer">Website source ↗</a><a href="https://github.com/joshualparris/ResearchLibrary/tree/main/rfs" target="_blank" rel="noopener noreferrer">Private notes ↗</a></div><p class="fine" style="margin-top:24px">For a fire emergency, call <strong style="color:#fff">000</strong>.<br>Orana FCC: <a href="tel:+61268813900">02 6881 3900</a> (non-emergencies).</p></div>
+    </div>
+  </footer>
+  <script>
+    (function(){
+      'use strict';
+      var menu=document.getElementById('menu-toggle'),nav=document.getElementById('site-nav');
+      menu.addEventListener('click',function(){var open=nav.classList.toggle('open');menu.setAttribute('aria-expanded',String(open));menu.textContent=open?'×  Close':'☰  Menu';});
+      nav.querySelectorAll('a').forEach(function(a){a.addEventListener('click',function(){nav.classList.remove('open');menu.setAttribute('aria-expanded','false');menu.textContent='☰  Menu';});});
+      var storageKey='orana-fieldnotes-checklist-v1',inputs=Array.prototype.slice.call(document.querySelectorAll('[data-task]'));
+      var saved={};try{saved=JSON.parse(localStorage.getItem(storageKey)||'{}')||{};}catch(e){saved={};}
+      function refresh(){var count=0;inputs.forEach(function(inp){if(inp.checked)count++;});document.getElementById('progress-fill').style.width=Math.round(100*count/inputs.length)+'%';document.getElementById('progress-text').textContent=count+' of '+inputs.length+' steps marked · personal notes only';}
+      inputs.forEach(function(inp){inp.checked=!!saved[inp.dataset.task];inp.addEventListener('change',function(){saved[inp.dataset.task]=inp.checked;try{localStorage.setItem(storageKey,JSON.stringify(saved));}catch(e){}refresh();});});refresh();
+      document.getElementById('reset-checks').addEventListener('click',function(){inputs.forEach(function(inp){inp.checked=false;});saved={};try{localStorage.removeItem(storageKey);}catch(e){}refresh();});
+      document.getElementById('copy-questions').addEventListener('click',function(){var out=Array.prototype.map.call(document.querySelectorAll('#meeting-questions li'),function(li){return '• '+li.textContent;}).join('\n');var status=document.getElementById('copy-status');if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(out).then(function(){status.textContent='Meeting questions copied.';}).catch(function(){status.textContent='Copy is unavailable here; select the questions above.';});}else{status.textContent='Copy is unavailable here; select the questions above.';}});
+      var active='all',search=document.getElementById('search'),resourceLinks=Array.prototype.slice.call(document.querySelectorAll('.resource'));
+      function filterResources(){var term=search.value.trim().toLowerCase(),shown=0;resourceLinks.forEach(function(link){var ok=(active==='all'||link.dataset.kind===active)&&link.textContent.toLowerCase().includes(term);link.hidden=!ok;if(ok)shown++;});document.getElementById('no-results').style.display=shown?'none':'block';}
+      search.addEventListener('input',filterResources);document.querySelectorAll('.filter').forEach(function(b){b.addEventListener('click',function(){active=b.dataset.filter;document.querySelectorAll('.filter').forEach(function(other){other.setAttribute('aria-pressed',String(other===b));});filterResources();});});
+      var qs=[
+        {q:'Which organisation is your authoritative source for NSW bushfire warnings?',a:['A personal study website','NSW Rural Fire Service','An old email newsletter'],c:1,why:'Use the live NSW RFS website and its official warnings.',url:'https://www.rfs.nsw.gov.au/'},
+        {q:'What number should you call to report a fire emergency?',a:['000','02 6881 3900','1800 679 737'],c:0,why:'Call Triple Zero (000) for fires or other emergencies. The other lines are for information and district enquiries.',url:'https://www.rfs.nsw.gov.au/fire-information/emergency-information'},
+        {q:'Does probationary membership by itself mean you are qualified to attend incidents?',a:['Yes','No, training and authorisation must be confirmed','Only on weekends'],c:1,why:'Membership is not the same as competency or incident authorisation; follow RFS training and local directions.',url:'https://www.rfs.nsw.gov.au/volunteer/training'},
+        {q:'Which fire-weather area includes Dubbo and Narromine?',a:['Far North Coast','Lower Central West Plains','Greater Sydney'],c:1,why:'RFS lists both council areas in the Lower Central West Plains fire-weather region.',url:'https://www.rfs.nsw.gov.au/fire-information/fire-danger-ratings-and-total-fire-bans'},
+        {q:'The normal statewide Bush Fire Danger Period generally runs from…',a:['1 October to 31 March, subject to local variations','1 January to 31 December without exception','1 June to 31 August'],c:0,why:'The statutory period is 1 October–31 March, but local declarations can vary it. Always check the current status.',url:'https://www.rfs.nsw.gov.au/fire-information/bush-fire-danger-period'},
+        {q:'Where can an RFS learner generally find assigned online courses?',a:['The public fire incident map','FUEL','A third-party social media group'],c:1,why:'FUEL is referenced in official RFS joining materials as the e-learning environment.',url:'https://fuel.rfs.nsw.gov.au/'},
+        {q:'What is a USI needed for?',a:['To view all live fires','Issuing nationally recognised training qualifications','To join any social group'],c:1,why:'The Unique Student Identifier links eligible nationally recognised learning records.',url:'https://www.usi.gov.au/'},
+        {q:'What kind of vegetation makes up the largest share of the Orana BFMC area?',a:['Grassland','Mangroves','Alpine forest'],c:0,why:'The published Orana risk page estimates approximately 61% grassland.',url:'https://www.rfs.nsw.gov.au/plan-and-prepare/managing-bush-fire-risk/bush-fire-management-committees/orana'},
+        {q:'What should you do with an old training booklet or an out-of-date emailed timetable?',a:['Assume it still applies','Publish it as current policy','Check the latest official RFS guidance and local training officer'],c:2,why:'Procedures and courses change; source dates and local confirmation matter.',url:'https://www.rfs.nsw.gov.au/volunteer/training'},
+        {q:'Is member wellbeing and family support part of the RFS support offering?',a:['No','Yes, the RFS describes peer support, chaplaincy and other services','Only after 10 years of service'],c:1,why:'The official member support page lists several confidential services and eligible family support.',url:'https://www.rfs.nsw.gov.au/volunteer/support-for-rfs-members-and-their-families'}
+      ];
+      var at=0,score=0,answered=false,btn=document.getElementById('quiz-next'),again=document.getElementById('quiz-restart'),prompt=document.getElementById('quiz-prompt'),answers=document.getElementById('quiz-answers'),feedback=document.getElementById('quiz-feedback'),counter=document.getElementById('quiz-counter');
+      function paint(){answered=false;btn.disabled=true;btn.hidden=false;again.hidden=true;feedback.textContent='';counter.textContent='Question '+(at+1)+' of '+qs.length;var item=qs[at];prompt.textContent=item.q;answers.innerHTML='';item.a.forEach(function(val,i){var label=document.createElement('label');label.className='answer';var input=document.createElement('input');input.type='radio';input.name='quiz-answer';input.value=String(i);var span=document.createElement('span');span.textContent=val;label.appendChild(input);label.appendChild(span);answers.appendChild(label);input.addEventListener('change',function(){if(answered)return;answered=true;var right=i===item.c;if(right)score++;answers.querySelectorAll('label').forEach(function(l,j){l.querySelector('input').disabled=true;if(j===item.c)l.classList.add('correct');else if(j===i)l.classList.add('incorrect');});feedback.innerHTML=(right?'Correct. ':'Not quite. ')+item.why+' <a href="'+item.url+'" target="_blank" rel="noopener noreferrer">Official source ↗</a>';btn.disabled=false;btn.textContent=at===qs.length-1?'See my result ↗':'Next question ↗';});});}
+      function finished(){counter.textContent='Knowledge check complete';prompt.textContent='You got '+score+' out of '+qs.length+'.';answers.innerHTML='';feedback.textContent='Keep learning at your own pace. This quiz is not a training qualification or assessment.';btn.hidden=true;again.hidden=false;}
+      btn.addEventListener('click',function(){if(!answered)return;at++;if(at>=qs.length)finished();else paint();});again.addEventListener('click',function(){at=0;score=0;paint();});paint();
+    })();
+  </script>
+</body>
+</html>
