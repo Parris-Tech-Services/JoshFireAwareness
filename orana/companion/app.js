@@ -31,6 +31,9 @@
   const sub = (base, tabs, cur) => `<nav class="sub" aria-label="Sub-sections">${tabs.map(([k, l]) => `<a href="#/${base}/${k}"${k === cur ? ' aria-current="page"' : ''}>${l}</a>`).join('')}</nav>`;
 
   // ---------- views ----------
+  const LIBTABS = [['stories', 'Stories'], ['claims', 'Claims'], ['sources', 'Sources']];
+  const rich = t => esc(t).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\*(.+?)\*/g, '<em>$1</em>');
+  const storyCard = s => `<a class="card story-card" href="#/read/${s.id}"><strong>${esc(s.title)}</strong><p>${esc(s.dek)}</p><p class="small">${s.minutes} min read · ${s.claims.length} sources</p></a>`;
   const V = {};
   V.home = () => {
     const next = B.nextSteps(D, state.pathway)[0], open = state.actions.filter(a => a.status !== 'done').length;
@@ -39,6 +42,7 @@
     <form data-form="ask" class="card"><label for="hq">Ask the brigade library</label><div class="row"><input id="hq" name="q" type="search" placeholder="e.g. What did the brigade decide about summer absences?" autocomplete="off"><button class="fit">Ask</button></div></form>
     <h2>Next for you</h2>
     ${next ? `<a class="card" href="#/pathway"><strong>${esc(next.step.title)}</strong><p class="small">${esc(next.step.stage)} · open the pathway to record progress</p></a>` : '<p class="card">No step is currently available. Open the pathway to see what is waiting on confirmation.</p>'}
+    <h2>Worth reading</h2>${(D.stories || []).slice(0, 2).map(storyCard).join('')}<p class="small"><a href="#/library/stories">All ${(D.stories || []).length} stories</a></p>
     <h2>For the secretary</h2>
     <a class="card" href="#/secretary/agenda"><strong>Prepare the next meeting</strong><p class="small">${open} open action${open === 1 ? '' : 's'} will carry forward to the agenda</p></a>
     <p class="small"><a href="#/practice">Practice scenarios</a> · <a href="#/quality">Research quality</a> · <a href="#/data">Your data: export, import, delete</a></p>
@@ -63,13 +67,22 @@
     return out;
   };
 
+  V.read = p => {
+    const st = D.stories || [], i = st.findIndex(x => x.id === p[0]), s = st[i]; if (!s) return notFound(); const nx = st[(i + 1) % st.length];
+    return `<article class="story"><p><a href="#/library/stories">← Stories</a></p><h1>${esc(s.title)}</h1><p class="dek">${esc(s.dek)}</p><p class="small">${s.minutes} minute read · built from ${s.claims.length} evidence records</p>
+    ${s.sections.map(x => `<h2>${esc(x.h)}</h2>${x.p.map(t => `<p>${rich(t)}</p>`).join('')}`).join('')}
+    <p class="takeaway"><strong>The short version.</strong> ${esc(s.takeaway)}</p>
+    <details><summary>Where this comes from (${s.claims.length})</summary>${s.claims.map(c => evidence(c, true)).join('')}</details>
+    <h2>Read next</h2>${storyCard(nx)}</article>`;
+  };
   V.library = (p, q) => {
-    if (p[0] === 'sources') return `<h1>Library</h1>${sub('library', [['claims', 'Claims'], ['sources', 'Sources']], 'sources')}<ul class="plain">${D.sources.map(s => `<li><a class="card" href="#/source/${s.id}">${chipClass(s)}${s.restricted ? '<span class="chip bad">Restricted: not opened</span>' : ''}<strong>${esc(s.title)}</strong><p class="small">Published ${fmt(s.published)} · ${esc(B.ACCESS_LABEL[s.access])}${s.checked ? ' ' + fmt(s.checked) : ''}</p></a></li>`).join('')}</ul>`;
+    if (p[0] === 'stories') return `<h1>Library</h1>${sub('library', LIBTABS, 'stories')}<p class="lead">Short reads built from the evidence. Each one lists its sources and says how sure it is.</p>${(D.stories || []).map(storyCard).join('')}`;
+    if (p[0] === 'sources') return `<h1>Library</h1>${sub('library', LIBTABS, 'sources')}<ul class="plain">${D.sources.map(s => `<li><a class="card" href="#/source/${s.id}">${chipClass(s)}${s.restricted ? '<span class="chip bad">Restricted: not opened</span>' : ''}<strong>${esc(s.title)}</strong><p class="small">Published ${fmt(s.published)} · ${esc(B.ACCESS_LABEL[s.access])}${s.checked ? ' ' + fmt(s.checked) : ''}</p></a></li>`).join('')}</ul>`;
     const f = { q: q.get('q') || '', cls: q.get('class') || '', topic: q.get('topic') || '', conf: q.get('conflicts') === '1' };
     const topics = [...new Set(D.claims.map(c => c.topic))].sort(), words = f.q.toLowerCase().split(/\s+/).filter(Boolean);
     const list = D.claims.filter(c => (!f.cls || S[c.source].class === f.cls) && (!f.topic || c.topic === f.topic) && (!f.conf || (c.conflicts || []).length) && words.every(w => (c.text + ' ' + c.topic + ' ' + S[c.source].title + ' ' + c.id).toLowerCase().includes(w)));
     const measures = list.filter(c => c.measure);
-    return `<h1>Library</h1>${sub('library', [['claims', 'Claims'], ['sources', 'Sources']], 'claims')}
+    return `<h1>Library</h1>${sub('library', LIBTABS, 'claims')}
     <form data-form="library" class="card"><label for="lq">Search claims</label><input id="lq" name="q" type="search" value="${esc(f.q)}" autocomplete="off">
     <div class="row"><div><label for="lc">Type of evidence</label><select id="lc" name="class"><option value="">All</option>${B.CLASSES.map(c => `<option value="${c}"${f.cls === c ? ' selected' : ''}>${B.CLASS_LABEL[c]}</option>`).join('')}</select></div>
     <div><label for="lt">Topic</label><select id="lt" name="topic"><option value="">All</option>${topics.map(t => `<option${f.topic === t ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select></div></div>
@@ -254,7 +267,7 @@
     if (name !== 'practice' || !parts[1]) run = null;
     let html; try { html = (V[name] || notFound)(parts.slice(1), new URLSearchParams(qs || '')); } catch (e) { html = `<h1>Something went wrong</h1><p class="note bad">${esc(e.message)}</p><p><a href="#/">Go to the start</a></p>`; }
     main.innerHTML = html;
-    document.querySelectorAll('.tabs a').forEach(a => a.dataset.tab === name || (name === 'claim' || name === 'source') && a.dataset.tab === 'library' ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'));
+    document.querySelectorAll('.tabs a').forEach(a => a.dataset.tab === name || (name === 'claim' || name === 'source' || name === 'read') && a.dataset.tab === 'library' ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'));
     document.title = (main.querySelector('h1') ? main.querySelector('h1').textContent + ' · ' : '') + 'Burrabadine Companion';
     if (!keepFocus) { main.focus({ preventScroll: true }); window.scrollTo(0, 0); }
   }
