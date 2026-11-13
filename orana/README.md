@@ -40,3 +40,13 @@ The fuller personalised research and original Gmail index live in a **separate p
 - Recheck official dynamic links, membership onboarding requirements and local terminology each fire season.
 - Never store a member number, personal home addresses, health/police records, authentication data, staff-only documents, duty rosters, restricted radio plans, incident imagery or raw emails here.
 - For changes, edit `orana/index.html` on the public repository `main`; the linked Vercel production project builds automatically.
+
+## Brigade companion (sign-in required)
+
+`companion/` holds the Burrabadine Brigade Companion: an evidence library, question search, personal pathway, secretary workbench and practice scenarios.
+
+- **This repository contains only the app's code.** No brigade records, names or figures are stored here. The library is returned by a database only after a correct username and password.
+- Sign-in lasts 12 hours. Ten wrong tries in 15 minutes pauses that username.
+- Notes and progress stay on the user's device unless they press "Save to my account".
+- The app pages work offline after the first visit; signing in needs a connection.
+- Source, tests and the publish script live in the private ResearchLibrary repository under `rfs/companion/`. Do not edit the files here by hand; they are generated.
