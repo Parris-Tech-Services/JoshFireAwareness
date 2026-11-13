@@ -43,6 +43,9 @@
       (c.supersedes || []).forEach(o => { if (!C[o] || C[o].superseded_by !== c.id) E(`${c.id}: supersedes ${o} without a back-link`); });
       if (c.status === 'retracted' && !c.superseded_by) E(`${c.id}: retracted claim needs superseded_by`);
       if (c.measure && !c.value) E(`${c.id}: measure without value`);
+      if (c.measure && !(c.as_at || s.published)) E(`${c.id}: a figure needs an as-at date`);
+      if (c.as_at && !isDate(c.as_at)) E(`${c.id}: bad as_at date`);
+      if ((c.reviewer || c.human_verified) && !(c.reviewer && isDate(c.reviewed))) E(`${c.id}: a human check needs a named reviewer and a date; an AI may not mark itself as the verifier`);
     });
     const refs = (owner, ids) => (ids || []).forEach(i => { if (!C[i]) E(`${owner}: unknown claim ${i}`); });
     d.rules.forEach(r => { if (!Q[r.ask]) E(`${r.id}: unknown question ${r.ask}`); });
@@ -126,7 +129,14 @@
   function claimView(d, id) {
     const c = d.claims.find(x => x.id === id); if (!c) return null;
     const s = d.sources.find(x => x.id === c.source);
-    return Object.assign({}, c, { src: s, cls: s.class, clsLabel: CLASS_LABEL[s.class], published: s.published, publishedNote: s.published_note || null });
+    const verification = c.status === 'retracted' ? 'rejected' : c.verified ? 'text_checked' : s.access === 'link_only' ? 'metadata_verified' : 'unverified';
+    const support = c.status === 'retracted' ? 'no support' : ['blocked', 'not_opened'].includes(s.access) ? 'inaccessible' : (s.class === 'unverified' || s.access === 'prior_review') ? 'indirect' : 'direct';
+    return Object.assign({}, c, { verification, support, asAt: c.as_at || s.published || null, recollection: s.class === 'personal_note', src: s, cls: s.class, clsLabel: CLASS_LABEL[s.class], published: s.published, publishedNote: s.published_note || null });
   }
-  return { CLASSES, CLASS_LABEL, ACCESS_LABEL, CATEGORIES, validateData, validateScenario, sensitiveHits, claimView, byId, isDate };
+  const VERIFICATION_LABEL = { unverified: 'Not checked', metadata_verified: 'Link checked only', text_checked: 'Text checked by AI (not a human review)', independently_reproduced: 'Independently reproduced', rejected: 'Rejected' };
+  const SUPPORT_LABEL = { direct: 'Direct: the source itself was read', indirect: 'Indirect: via a summary or earlier research', inaccessible: 'Source could not be opened', 'no support': 'No support' };
+  // Living-person gate: every capitalised two-word phrase in evidence text must already be on the reviewed list.
+  const phrases = t => [...new Set(String(t).match(/\b[A-Z][a-z]+ [A-Z][a-z]+\b/g) || [])];
+  function newPhrases(d, known) { const k = new Set(known), out = new Set(); const scan = t => phrases(t).forEach(p => { if (!k.has(p)) out.add(p); }); d.claims.forEach(c => scan(c.text)); (d.stories || []).forEach(s => scan(JSON.stringify(s))); (d.scenarios || []).forEach(s => scan(JSON.stringify(s))); d.decisions.forEach(x => scan(x.text)); d.actions.forEach(x => scan(x.text + ' ' + x.owner)); d.questions.forEach(q => scan(q.text)); return [...out]; }
+  return { VERIFICATION_LABEL, SUPPORT_LABEL, phrases, newPhrases, CLASSES, CLASS_LABEL, ACCESS_LABEL, CATEGORIES, validateData, validateScenario, sensitiveHits, claimView, byId, isDate };
 });

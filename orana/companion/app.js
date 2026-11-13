@@ -22,16 +22,18 @@
     const flags = [];
     if (c.status === 'retracted') flags.push('<span class="chip bad">Retracted</span>');
     if (c.kind === 'interpretation') flags.push('<span class="chip">Our reading</span>'); else flags.push('<span class="chip">Document says</span>');
+    if (c.recollection) flags.push('<span class="chip warn">A recollection, not a finding</span>');
     if (c.conflicts && c.conflicts.length) flags.push(`<span class="chip warn">${c.conflicts.length} conflicting</span>`);
     if (c.depends_on && c.depends_on.length) flags.push('<span class="chip warn">Depends on unconfirmed rule</span>');
     return `<a class="card" href="#/claim/${c.id}">${chipClass(c.src)}${flags.join('')}
       <p>${esc(c.text)}</p>
-      <p class="small">${esc(c.src.title)} · ${esc(c.locator)}<br>Published ${fmt(c.published)} · ${c.verified ? 'wording checked ' + fmt(c.verified) : 'not re-checked against the source'} · confidence ${c.confidence}</p>${compact ? '' : `<p class="small">Limits: ${esc(c.src.limits)}</p>`}</a>`;
+      <p class="small">${esc(c.src.title)} · ${esc(c.locator)}<br>As at ${fmt(c.asAt)} · ${state.humanChecks[c.id] ? 'human-checked by ' + esc(state.humanChecks[c.id].by) : esc(B.VERIFICATION_LABEL[c.verification])} · confidence ${c.confidence}</p>${compact ? '' : `<p class="small">Limits: ${esc(c.src.limits)}</p>`}</a>`;
   }
   const sub = (base, tabs, cur) => `<nav class="sub" aria-label="Sub-sections">${tabs.map(([k, l]) => `<a href="#/${base}/${k}"${k === cur ? ' aria-current="page"' : ''}>${l}</a>`).join('')}</nav>`;
 
   // ---------- views ----------
-  const LIBTABS = [['stories', 'Stories'], ['claims', 'Claims'], ['sources', 'Sources']];
+  const LIBTABS = [['stories', 'Stories'], ['claims', 'Claims'], ['reconcile', 'Reconcile'], ['sources', 'Sources']];
+  const KIND = { record: ['ok', 'From the record'], note: ['warn', 'A recollection'], reading: ['', 'Our reading'], open: ['bad', 'Not yet confirmed'] };
   const rich = t => esc(t).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\*(.+?)\*/g, '<em>$1</em>');
   const storyCard = s => `<a class="card story-card" href="#/read/${s.id}"><strong>${esc(s.title)}</strong><p>${esc(s.dek)}</p><p class="small">${s.minutes} min read · ${s.claims.length} sources</p></a>`;
   const V = {};
@@ -70,12 +72,13 @@
   V.read = p => {
     const st = D.stories || [], i = st.findIndex(x => x.id === p[0]), s = st[i]; if (!s) return notFound(); const nx = st[(i + 1) % st.length];
     return `<article class="story"><p><a href="#/library/stories">← Stories</a></p><h1>${esc(s.title)}</h1><p class="dek">${esc(s.dek)}</p><p class="small">${s.minutes} minute read · built from ${s.claims.length} evidence records</p>
-    ${s.sections.map(x => `<h2>${esc(x.h)}</h2>${x.p.map(t => `<p>${rich(t)}</p>`).join('')}`).join('')}
+    ${s.sections.map(x => `<h2>${esc(x.h)}</h2><span class="chip ${KIND[x.k || 'record'][0]}">${KIND[x.k || 'record'][1]}</span>${x.p.map(t => `<p>${rich(t)}</p>`).join('')}`).join('')}
     <p class="takeaway"><strong>The short version.</strong> ${esc(s.takeaway)}</p>
     <details><summary>Where this comes from (${s.claims.length})</summary>${s.claims.map(c => evidence(c, true)).join('')}</details>
     <h2>Read next</h2>${storyCard(nx)}</article>`;
   };
   V.library = (p, q) => {
+    if (p[0] === 'reconcile') return `<h1>Library</h1>${sub('library', LIBTABS, 'reconcile')}<p class="lead">Where documents disagree, each version side by side in date order, and what would settle it. The library does not choose.</p>${B.reconcile(D).map(r => `<section class="card" data-rec="${esc(r.topic)}"><h2>${esc(r.topic[0].toUpperCase() + r.topic.slice(1))}</h2><div class="scroll"><table><tr><th>As at</th><th>Version</th><th>Evidence</th></tr>${r.versions.map(v => `<tr><td>${fmt(v.asAt)}</td><td><a href="#/claim/${v.id}">${esc(v.value ? v.value + ' — ' + v.measure : v.text.slice(0, 110) + '…')}</a></td><td>${chipClass(v.src)}</td></tr>`).join('')}</table></div><p class="small"><strong>What would settle it:</strong></p><ul class="small">${r.settle.map(q => `<li>${esc(q.text)} <em>(${q.awaiting})</em></li>`).join('') || '<li>No question recorded yet.</li>'}</ul></section>`).join('')}`;
     if (p[0] === 'stories') return `<h1>Library</h1>${sub('library', LIBTABS, 'stories')}<p class="lead">Short reads built from the evidence. Each one lists its sources and says how sure it is.</p>${(D.stories || []).map(storyCard).join('')}`;
     if (p[0] === 'sources') return `<h1>Library</h1>${sub('library', LIBTABS, 'sources')}<ul class="plain">${D.sources.map(s => `<li><a class="card" href="#/source/${s.id}">${chipClass(s)}${s.restricted ? '<span class="chip bad">Restricted: not opened</span>' : ''}<strong>${esc(s.title)}</strong><p class="small">Published ${fmt(s.published)} · ${esc(B.ACCESS_LABEL[s.access])}${s.checked ? ' ' + fmt(s.checked) : ''}</p></a></li>`).join('')}</ul>`;
     const f = { q: q.get('q') || '', cls: q.get('class') || '', topic: q.get('topic') || '', conf: q.get('conflicts') === '1' };
@@ -95,11 +98,14 @@
     const c = B.claimView(D, p[0]); if (!c) return notFound();
     const used = [].concat(D.apps.filter(a => a.claims.includes(c.id)).map(a => 'App: ' + a.name), D.decisions.filter(x => x.claims.includes(c.id)).map(x => 'Decision: ' + x.text), D.questions.filter(x => x.claims.includes(c.id)).map(x => 'Open question: ' + x.text), D.scenarios.filter(sc => JSON.stringify(sc).includes('"' + c.id + '"')).map(sc => 'Practice: ' + sc.title));
     return `<p><a href="#/library">← Library</a></p><h1>${c.kind === 'statement' ? 'What the document says' : "This library's reading"}</h1>
-    ${c.status === 'retracted' ? '<p class="note bad"><strong>Retracted.</strong> Kept so the correction stays visible.</p>' : ''}
+    ${c.status === 'retracted' ? '<p class="note bad"><strong>Retracted.</strong> Kept so the correction stays visible.</p>' : ''}${c.recollection ? '<p class="note"><strong>A recollection, not a finding.</strong> This records what one person remembers or was told. It does not establish that it is so.</p>' : ''}
     <div class="card">${chipClass(c.src)}<p>${esc(c.text)}</p></div>
     <dl><dt>Source</dt><dd><a href="#/source/${c.src.id}">${esc(c.src.title)}</a></dd><dt>Where in the source</dt><dd>${esc(c.locator)}</dd>
     <dt>Published</dt><dd>${fmt(c.published)}${c.publishedNote ? ' — ' + esc(c.publishedNote) : ''}</dd>
-    <dt>Wording checked against the source</dt><dd>${c.verified ? fmt(c.verified) + ' (' + esc(B.ACCESS_LABEL[c.src.access]) + ')' : 'Not in this build — ' + esc(B.ACCESS_LABEL[c.src.access])}</dd>
+    <dt>True as at</dt><dd>${fmt(c.asAt)}${c.measure ? ' — a figure for that date; it does not tell you the current number' : ''}</dd>
+    <dt>Verification</dt><dd>${esc(B.VERIFICATION_LABEL[c.verification])}${c.verified ? ', ' + fmt(c.verified) + ' (' + esc(B.ACCESS_LABEL[c.src.access]) + ')' : ' — ' + esc(B.ACCESS_LABEL[c.src.access])}</dd>
+    <dt>Support</dt><dd>${esc(B.SUPPORT_LABEL[c.support])}</dd>
+    <dt>Human check</dt><dd id="human">${state.humanChecks[c.id] ? `Checked against the original by <strong>${esc(state.humanChecks[c.id].by)}</strong> on ${fmt(state.humanChecks[c.id].date)} (your record). <button class="link" data-act="human-del" data-id="${c.id}">Remove</button>` : `None yet. <label for="hc-by" class="small">If you have compared this wording with the original yourself, enter your name:</label><input type="text" id="hc-by"><button class="sec" data-act="human-save" data-id="${c.id}">I checked this against the original</button>`}</dd>
     <dt>Confidence</dt><dd>${c.confidence}</dd><dt>Limits of this source</dt><dd>${esc(c.src.limits)}</dd></dl>
     ${(c.conflicts || []).length ? `<h2>Conflicting evidence</h2><p class="small">Shown side by side. The library does not pick a winner.</p>${c.conflicts.map(k => `<p class="note">${esc(k.note)}</p>${evidence(k.id, true)}`).join('')}` : ''}
     ${c.superseded_by ? `<h2>Superseded by</h2>${evidence(c.superseded_by, true)}` : ''}${(c.supersedes || []).length ? `<h2>Replaces</h2>${c.supersedes.map(x => evidence(x, true)).join('')}` : ''}
@@ -115,6 +121,8 @@
     <h2>Claims from this source (${cl.length})</h2>${cl.map(c => evidence(c.id, true)).join('') || '<p class="card">No claims are drawn from this source.</p>'}`;
   };
 
+  let card = { i: 0, shown: false };
+  V.recall = () => { const cs = B.recallCards(D), c = cs[card.i % cs.length]; return `<p><a href="#/practice">← Practice</a></p><h1>Quick recall</h1><p class="small">Card ${card.i % cs.length + 1} of ${cs.length} · practice only</p><div class="card" id="recall"><p><strong>${esc(c.prompt)}</strong></p>${card.shown ? `<p>${esc(c.answer)}</p><p class="small"><a href="#/claim/${c.id}">See the evidence</a></p>` : ''}</div><p>${card.shown ? '<button data-act="card-next">Next card</button>' : '<button data-act="card-show">Show answer</button>'}</p>`; };
   V.pathway = () => {
     const st = B.pathwayStatus(D, state.pathway), est = B.ordinaryEstimate(D, state.pathway._est || {}), o = state.pathway._est || {};
     const label = { confirmed: ['ok', 'Officially confirmed (as recorded by you)'], 'self-recorded': ['warn', 'Recorded by you — not officially confirmed'], available: ['', 'You can do this next'], blocked: ['bad', 'Waiting on earlier steps'] };
@@ -152,6 +160,7 @@
     const weak = {}; Object.entries(state.practice).forEach(([id, r]) => { const sc = scenario(id); if (!sc || !r.last) return; r.last.path.filter(s => s.quality !== 'best').forEach(s => sc.nodes[s.node].choices.find(c => c.quality === 'best').claims.forEach(c => weak[c] = sc.title)); });
     return `<h1>Practice</h1><p class="practice-banner"><strong>Practice only.</strong> These scenarios help you learn where things are and who to ask. They do not grant any qualification and are not advice for a live incident.</p>
     <ul class="plain">${D.scenarios.map(sc => { const r = state.practice[sc.id]; return `<li><a class="card" href="#/practice/${sc.id}"><span class="chip">${esc(sc.category.replace('-', ' '))}</span><strong>${esc(sc.title)}</strong><p>${esc(sc.summary)}</p><p class="small">${r ? `Completed ${r.runs} time${r.runs === 1 ? '' : 's'} · last run ${r.last.score}/${r.last.path.length} best choices` : 'Not attempted'}</p></a></li>`; }).join('')}</ul>
+    <h2>Quick recall</h2><a class="card" href="#/recall"><strong>${B.recallCards(D).length} recall cards</strong><p class="small">Drawn only from text-checked, high-confidence records. Tests your memory, not whether the source is right.</p></a>
     <h2>Targeted revision</h2>${Object.keys(weak).length ? `<p class="small">From choices in your last runs that were not the best option:</p>${Object.keys(weak).map(c => evidence(c, true)).join('')}` : '<p class="card">Nothing to revise yet. Revision appears here after a run where a choice could have been better.</p>'}
     <p class="small">No operational (fireground) scenarios are offered: no current official training material has been supplied to base them on.</p>`;
   };
@@ -248,6 +257,7 @@
     ${sec('q-links', 'Links that did not open', q.links ? q.links.length : 0, q.links ? `<p class="small">Checked ${fmt(q.linksChecked)} from the build machine. "Blocked" means the site refused an automated check; the page may be fine in your browser.</p><ul>${q.links.map(l => `<li><a href="#/source/${l.id}">${esc(S[l.id].title)}</a> — ${esc(l.status)}${l.code ? ' (HTTP ' + l.code + ')' : ''}</li>`).join('')}</ul>` : '<p>No link check has been run. Run <code>node scripts/linkcheck.js</code>.</p>')}
     ${sec('q-await', 'Awaiting brigade confirmation', q.awaiting.length, `<p><button class="sec" data-act="print-questions">Print questions sheet</button></p>` + ['captain', 'secretary', 'district'].map(w => `<h3>${w[0].toUpperCase() + w.slice(1)}</h3><ul class="plain">${q.awaiting.filter(x => x.awaiting === w).map(x => { const a = state.answers[x.id]; return `<li class="card" data-q="${x.id}">${a ? '<span class="chip ok">Answer recorded by you</span>' : ''}<p>${esc(x.text)}</p>${a ? `<p class="note ok">${esc(a.text)}<br><span class="small">${esc(a.by || 'source not given')} · ${fmt(a.date)}. Your record; the library's evidence is unchanged until a document supports it.</span></p>` : ''}<details><summary>${a ? 'Change' : 'Record'} an answer</summary><label for="an-${x.id}">What you were told</label><textarea id="an-${x.id}">${esc(a ? a.text : '')}</textarea><label for="ab-${x.id}">Who told you, and how (e.g. "Captain, at the January meeting")</label><input type="text" id="ab-${x.id}" value="${esc(a ? a.by : '')}"><p><button data-act="ans-save" data-id="${x.id}">Save answer</button> ${a ? `<button class="sec" data-act="ans-del" data-id="${x.id}">Remove</button>` : ''}</p></details></li>`; }).join('')}</ul>`).join(''))}
     ${sec('q-rule', 'Records that depend on an uncertain rule', q.ruleDependent.length, q.ruleDependent.map(r => `<h3>${esc(r.rule.title)}</h3><ul>${r.claims.map(c => li(c)).join('')}${r.steps.map(s => `<li>Pathway step: ${esc(D.pathway.steps.find(p => p.id === s).title)}</li>`).join('')}</ul>`).join(''))}
+    ${sec('q-log', 'Search log', (D.searchLog || []).length, `<p class="small">Every search behind this library, including the ones that failed.</p><div class="scroll"><table><tr><th>Where</th><th>What</th><th>Result</th></tr>${(D.searchLog || []).map(e => `<tr><td>${esc(e.where)}<br><span class="small">${fmt(e.date)}</span></td><td>${esc(e.query)}</td><td>${esc(e.result)}</td></tr>`).join('')}</table></div>`)}
     ${sec('q-cov', 'Missing source coverage', q.coverage.missing.length + q.coverage.sourcesNotRead.length, `<h3>Not held at all</h3><ul>${q.coverage.missing.map(m => `<li>${esc(m)}</li>`).join('')}</ul><h3>Sources not read in this build</h3><ul>${q.coverage.sourcesNotRead.map(x => `<li><a href="#/source/${x.id}">${esc(S[x.id].title)}</a> — ${esc(x.why)}</li>`).join('')}</ul>${q.coverage.questionsWithoutEvidence.length ? `<h3>Questions with no evidence yet</h3><ul>${q.coverage.questionsWithoutEvidence.map(x => `<li>${esc(Q[x].text)}</li>`).join('')}</ul>` : ''}`)}
     <h2>Public-safe export</h2>${pe ? `<div class="card" id="public-export"><p>${pe.records.length} record(s) pass every check and could be offered to Orana Fieldnotes. ${pe.rejected.length} allowlisted or flagged record(s) were refused.</p><p class="small">A record leaves only if it is on the reviewed allowlist, comes from a public official source, is not rule-dependent, and its text contains no private names, contact details or private links. Fields copied: ${pe.fields.join(', ')}.</p>${pe.rejected.length ? `<ul class="small">${pe.rejected.map(r => `<li>${r.id}: ${esc(r.why.join('; '))}</li>`).join('')}</ul>` : ''}<button class="sec" data-act="public-export">Download public-safe export</button></div>` : '<p>No allowlist found.</p>'}`;
   };
@@ -267,7 +277,7 @@
     if (name !== 'practice' || !parts[1]) run = null;
     let html; try { html = (V[name] || notFound)(parts.slice(1), new URLSearchParams(qs || '')); } catch (e) { html = `<h1>Something went wrong</h1><p class="note bad">${esc(e.message)}</p><p><a href="#/">Go to the start</a></p>`; }
     main.innerHTML = html;
-    document.querySelectorAll('.tabs a').forEach(a => a.dataset.tab === name || (name === 'claim' || name === 'source' || name === 'read') && a.dataset.tab === 'library' ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'));
+    document.querySelectorAll('.tabs a').forEach(a => a.dataset.tab === name || (name === 'claim' || name === 'source' || name === 'read') && a.dataset.tab === 'library' || name === 'recall' && a.dataset.tab === 'practice' ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'));
     document.title = (main.querySelector('h1') ? main.querySelector('h1').textContent + ' · ' : '') + 'Burrabadine Companion';
     if (!keepFocus) { main.focus({ preventScroll: true }); window.scrollTo(0, 0); }
   }
@@ -317,10 +327,13 @@
       'roster-use': () => { const an = B.analyseRoster(roster.parsed, roster.column, roster.eligible); Object.assign(state.quorumInputs, { eligible: String(an.eligible), basis: an.basis + (roster.demo ? ' — FAKE DEMO DATA' : ''), tried: false }); save(); },
       'export': () => download('companion-export-' + today() + '.json', B.exportState(state, today()), 'application/json'),
       'reset': () => { if (!confirm('Delete everything this app has stored on this device? This cannot be undone.')) return; try { localStorage.removeItem(KEY); } catch (err) { } state = B.emptyState(); state.actions = B.seedActions(D); roster = null; toast('All local data deleted'); },
+      'human-save': () => { const by = $('#hc-by').value.trim(); if (!by) return toast('Enter your name first'); state.humanChecks[id] = { by, date: today() }; save(); toast('Human check recorded'); },
+      'human-del': () => { delete state.humanChecks[id]; save(); },
+      'card-show': () => { card.shown = true; }, 'card-next': () => { card = { i: card.i + 1, shown: false }; },
       'ans-save': () => { const tx = $('#an-' + id).value.trim(); if (!tx) return toast('Write the answer first'); state.answers[id] = { text: tx, by: $('#ab-' + id).value.trim(), date: today() }; save(); toast('Answer recorded'); },
       'ans-del': () => { delete state.answers[id]; save(); },
       'print-questions': () => printHTML(`<h1>Burrabadine Rural Fire Brigade — questions to confirm</h1><p>Prepared ${fmt(today())}. Personal list; not an official document.</p>` + ['captain', 'secretary', 'district'].map(w => `<h2>For the ${w}</h2><table>${D.questions.filter(x => x.awaiting === w && !state.answers[x.id]).map(x => `<tr><td style="width:55%">${esc(x.text)}</td><td>&nbsp;</td></tr>`).join('') || '<tr><td>None outstanding</td></tr>'}</table>`).join('')),
-      'sync-save': () => { const msg = t => { const el = $('#sync-msg'); if (el) el.textContent = t; }; self.BBC_SYNC.put({ pathway: state.pathway, practice: state.practice, research: state.research, answers: state.answers, quorumInputs: state.quorumInputs }, { actions: state.actions, meetings: state.meetings }).then(ok => msg(ok ? 'Saved to your account ' + new Date().toLocaleTimeString('en-AU') + '.' : 'Not saved: your sign-in has expired. Sign out and in again.')).catch(e => msg('Not saved: ' + e.message)); return false; },
+      'sync-save': () => { const msg = t => { const el = $('#sync-msg'); if (el) el.textContent = t; }; self.BBC_SYNC.put({ pathway: state.pathway, practice: state.practice, research: state.research, answers: state.answers, quorumInputs: state.quorumInputs, humanChecks: state.humanChecks }, { actions: state.actions, meetings: state.meetings }).then(ok => msg(ok ? 'Saved to your account ' + new Date().toLocaleTimeString('en-AU') + '.' : 'Not saved: your sign-in has expired. Sign out and in again.')).catch(e => msg('Not saved: ' + e.message)); return false; },
       'sync-load': () => { const msg = t => { const el = $('#sync-msg'); if (el) el.textContent = t; }; if (!confirm('Replace what is on this device with the copy saved in your account?')) return false; self.BBC_SYNC.get().then(r => { if (!r) return msg('Your sign-in has expired. Sign out and in again.'); if (!r.mine && !r.shared) return msg('Nothing has been saved to your account yet.'); if (r.mine) Object.assign(state, r.mine.data); if (r.shared) Object.assign(state, r.shared.data); save(); render(true); msg('Loaded.' + (r.shared ? ' Shared register last saved by ' + r.shared.by + '.' : '')); }).catch(e => msg('Not loaded: ' + e.message)); return false; },
       'sync-out-all': () => { self.BBC_SYNC.signOutEverywhere(); return false; },
       'public-export': () => { const pe = B.publicExport(D, D.allowlist, B.privateTerms(D)); download('public-safe-export.json', JSON.stringify({ generated: today(), note: 'Reviewed public-safe records only.', records: pe.records }, null, 1), 'application/json'); }

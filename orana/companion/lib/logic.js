@@ -130,8 +130,8 @@
   const toCSV = rows => rows.map(r => r.map(c => { c = c == null ? '' : String(c); if (/^[=+\-@]/.test(c)) c = "'" + c; return /[",\n]/.test(c) ? '"' + c.replace(/"/g, '""') + '"' : c; }).join(',')).join('\r\n') + '\r\n';
 
   // ---------- Local state: export / import ----------
-  const STATE_VERSION = 1, STATE_KEYS = ['pathway', 'practice', 'research', 'answers', 'actions', 'meetings', 'quorumInputs'];
-  const emptyState = () => ({ pathway: {}, practice: {}, research: [], answers: {}, actions: null, meetings: [], quorumInputs: {} });
+  const STATE_VERSION = 1, STATE_KEYS = ['pathway', 'practice', 'research', 'answers', 'actions', 'meetings', 'quorumInputs', 'humanChecks'];
+  const emptyState = () => ({ pathway: {}, practice: {}, research: [], answers: {}, actions: null, meetings: [], quorumInputs: {}, humanChecks: {} });
   // Roster data is never part of state, so it cannot be exported, synced or cached.
   function exportState(state, date) { const out = { app: 'burrabadine-companion', version: STATE_VERSION, exported: date, data: {} }; STATE_KEYS.forEach(k => out.data[k] = state[k]); return JSON.stringify(out, null, 1); }
   function importState(text) {
@@ -198,5 +198,9 @@
   // Names of private individuals are derived from brigade-record text so they can never be exported.
   function privateTerms(d) { const set = new Set(['Josh', 'Dad']); d.claims.filter(c => c.topic === 'officers').forEach(c => (c.text.match(/\b[A-Z][a-z]+\b/g) || []).forEach(w => { if (!/^(The|Join|Us|President|Secretary|Captain|Treasurer|Permit|Officers|September|November|Contact|Josh|Dad|July)$/.test(w)) set.add(w); })); return [...set]; }
 
-  return { buildIndex, ask, pathwayStatus, nextSteps, ordinaryEstimate, addMonths, quorum, parseCSV, analyseRoster, DEMO_ROSTER, STANDING, seedActions, buildAgenda, updateAction, toCSV, emptyState, exportState, importState, STATE_KEYS, quality, publicExport, privateTerms, hash, PUBLIC_FIELDS };
+  // Recall cards come only from text-checked, high-confidence document statements; each is tied to its exact claim.
+  function recallCards(d) { return d.claims.filter(c => c.kind === 'statement' && c.status !== 'retracted' && c.confidence === 'high' && c.verified).map(c => ({ id: c.id, prompt: `What does the ${d.sources.find(s => s.id === c.source).title.replace(/^Burrabadine /, '')} record about ${c.topic}?`, answer: c.text })); }
+  // Side-by-side versions per topic wherever claims conflict, with the open questions that would settle them.
+  function reconcile(d) { const out = []; [...new Set(d.claims.filter(c => (c.conflicts || []).length).map(c => c.topic))].sort().forEach(t => { const ids = new Set(); d.claims.filter(c => c.topic === t && (c.conflicts || []).length).forEach(c => { ids.add(c.id); c.conflicts.forEach(k => ids.add(k.id)); }); out.push({ topic: t, versions: [...ids].map(id => I.claimView(d, id)).sort((a, b) => String(a.asAt).localeCompare(String(b.asAt))), settle: d.questions.filter(q => q.topic === t || q.claims.some(c => ids.has(c))) }); }); return out; }
+  return { recallCards, reconcile, buildIndex, ask, pathwayStatus, nextSteps, ordinaryEstimate, addMonths, quorum, parseCSV, analyseRoster, DEMO_ROSTER, STANDING, seedActions, buildAgenda, updateAction, toCSV, emptyState, exportState, importState, STATE_KEYS, quality, publicExport, privateTerms, hash, PUBLIC_FIELDS };
 });

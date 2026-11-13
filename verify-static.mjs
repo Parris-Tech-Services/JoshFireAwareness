@@ -33,3 +33,22 @@ if (failures.length) {
 }
 
 console.log("Static verification passed: document shell, refresh control, offline registration, and required assets are present.");
+
+// Brigade companion: the public repository must hold only the data-free shell.
+{
+  const { readdir, readFile: rf } = await import("node:fs/promises");
+  const dir = path.join(root, "orana", "companion");
+  const files = (await readdir(dir, { recursive: true })).filter((f) => /\.(html|js|css|json)$/.test(f));
+  const bad = [];
+  if (!files.includes("index.html") || !files.includes("login.js")) bad.push("companion shell is incomplete");
+  if (files.some((f) => /(^|\/)data(\.js|\/)/.test(f))) bad.push("companion must not ship a data bundle");
+  for (const f of files) {
+    const t = await rf(path.join(dir, f), "utf8");
+    if (/drive\.google\.com|mail\.google\.com/.test(t)) bad.push(`${f}: private link`);
+    if (/(?:\+?61|\b0)[23478](?:[ -]?\d){8}\b/.test(t)) bad.push(`${f}: phone number`);
+    if (f !== "lib/integrity.js" && /\bBSB\b/.test(t)) bad.push(`${f}: bank detail`);
+    if (/self\.BBC_DATA\s*=\s*\{/.test(t)) bad.push(`${f}: embedded library data`);
+  }
+  if (bad.length) { console.error("Companion checks failed:\n - " + bad.join("\n - ")); process.exit(1); }
+  console.log(`companion shell checked: ${files.length} files, no private data`);
+}
